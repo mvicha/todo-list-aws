@@ -9,3 +9,4 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ## [1.0.0] - 2021-05-10
 ### Added
 - Versión inicial de código
+- aws s3api create-bucket --bucket mvicha-todo-list-serverless-sam

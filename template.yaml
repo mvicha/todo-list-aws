@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  todo-list-serverless
+
+  todo-list-serverless lambda-dynamodb-sam solution
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  todoListFcnReadOnly:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: todos/
+      Handler: todoTableClass.lambda_handler
+      Runtime: python3.8
+      Policies: AWSLambdaDynamoDBExecutionRole
+      Events:
+        list:
+          Type: Api
+          Properties:
+            Path: /
+            Method: get
+        get:
+          Type: Api
+          Properties:
+            Path: /{id}
+            Method: get
+        translate:
+          Type: Api
+          Properties:
+            Path: /{id}/{target_language}
+            Method: get
+  todoListFcnReadWrite:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: todos/
+      Handler: todoTableClass.lambda_handler
+      Runtime: python3.8
+      Policies: AmazonDynamoDBFullAccess
+      Events:
+        create:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /
+            Method: post
+        update:
+          Type: Api
+          Properties:
+            Path: /{id}
+            Method: put
+        delete:
+          Type: Api
+          Properties:
+            Path: /{id}
+            Method: delete
+  TodoDynamoDbTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  todoListServerLessAPI:
+    Description: "API Gateway endpoint URL for Prod stage for todo-list-serverless function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/todo-list-serverless/"
+  todoListServerLessReadOnlyFunction:
+    Description: "todoListServerLessReadOnly Lambda Function ARN"
+    Value: !GetAtt todoListFcnReadOnly.Arn
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/todo-list-serverless/"
+  todoListServerLessReadWriteFunction:
+    Description: "todoListServerLessReadWrite Lambda Function ARN"
+    Value: !GetAtt todoListFcnReadWrite.Arn
+  todoListServerLessReadOnlyIamRole:
+    Description: "Implicit IAM Role created for todoListFcnReadOnly function"
+    Value: !GetAtt todoListFcnReadOnlyRole.Arn
+  todoListServerLessReadWriteIamRole:
+    Description: "Implicit IAM Role created for todoListFcnReadWrite function"
+    Value: !GetAtt todoListFcnReadWriteRole.Arn
+
