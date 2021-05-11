@@ -260,3 +260,114 @@ Esto se puede hacer a través de los ajustes en el `serverless.yml`.
 ```
 
 En caso de que esperes mucha fluctuación de tráfico, te recomendamos que consultes esta guía sobre cómo escalar automáticamente el DynamoDB [https://aws.amazon.com/blogs/aws/auto-scale-dynamodb-with-dynamic-dynamodb/](https://aws.amazon.com/blogs/aws/auto-scale-dynamodb-with-dynamic-dynamodb/)
+
+
+
+
+
+
+
+docker image build -t casopracticounir:1.0-buster .
+docker container run -it --name caso1 -v ${PWD}/credentials:/root/.aws/credentials -v ${PWD}/Cloud9.yaml:/usr/src/Cloud9.yaml --rm -v ${PWD}/.vimrc:/root/.vimrc casopracticounir:1.0-buster bash
+aws cloudformation create-stack --region us-east-1 --stack-name UnirAWSIDE --template-body file:///tmp/Cloud9.yaml
+aws cloudformation delete-stack --stack-name UnirAWSIDE --region us-east-1
+
+git clone git@github.com:mvicha/todo-list-serverless.git
+# Read setup.sh from recently cloned repository
+npm install -g serverless
+
+Git branch  - Serverless Stage
+feature     - serverless-dev (manually deployed using serverless cli)
+develop     - dev (automatically deployed using git pull requests)
+master      - prod (automatically deployed using git merge)
+
+
+http://joshuaballoch.github.io/production-ready-aws-lambda/
+
+
+
+
+
+
+
+
+
+
+aws codecommit create-repository --repository-name todo-list-serverless --repository-description "Aplicativo Backend en Python como ejemplo de migracion entre plataformas de desarrrollo procedente del Apartado A en Caso Practico 1 Experto Universitario en DevOps & Cloud." --tags Autor="Marcos Federico Villa"
+{
+    "repositoryMetadata": {
+        "repositoryName": "todo-list-serverless",
+        "cloneUrlSsh": "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-serverless",
+        "lastModifiedDate": 1620653767.247,
+        "repositoryDescription": "Aplicativo Backend en Python como ejemplo de migracion entre plataformas de desarrrollo procedente del Apartado A en Caso Practico 1 Experto Universitario en DevOps & Cloud.",
+        "cloneUrlHttp": "https://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-serverless",
+        "creationDate": 1620653767.247,
+        "repositoryId": "77c87e44-XXXX-xxxx-XXXX-5853aebab478",
+        "Arn": "arn:aws:codecommit:us-east-1:750489264097:todo-list-serverless",
+        "accountId": "XXXXXXXXX"
+    }
+}
+
+
+git config --global credential.helper '!aws codecommit credential-helper $@'
+git config --global credential.UseHttpPath true
+
+vocstartsoft:~/environment $ sam init
+Which template source would you like to use?
+        1 - AWS Quick Start Templates
+        2 - Custom Template Location
+Choice: 1
+What package type would you like to use?
+        1 - Zip (artifact is a zip uploaded to S3)
+        2 - Image (artifact is an image uploaded to an ECR image repository)
+Package type: 1
+
+Which runtime would you like to use?
+        1 - nodejs14.x
+        2 - python3.8
+        3 - ruby2.7
+        4 - go1.x
+        5 - java11
+        6 - dotnetcore3.1
+        7 - nodejs12.x
+        8 - nodejs10.x
+        9 - python3.7
+        10 - python3.6
+        11 - python2.7
+        12 - ruby2.5
+        13 - java8.al2
+        14 - java8
+        15 - dotnetcore2.1
+Runtime: 2
+
+Project name [sam-app]:
+
+Cloning app templates from https://github.com/aws/aws-sam-cli-app-templates
+
+AWS quick start application templates:
+        1 - Hello World Example
+        2 - EventBridge Hello World
+        3 - EventBridge App from scratch (100+ Event Schemas)
+        4 - Step Functions Sample App (Stock Trader)
+        5 - Elastic File System Sample App
+Template selection: 1
+
+    -----------------------
+    Generating application:
+    -----------------------
+    Name: sam-app
+    Runtime: python3.8
+    Dependency Manager: pip
+    Application Template: hello-world
+    Output Directory: .
+
+    Next steps can be found in the README file at ./sam-app/README.md
+
+
+docker network create aws
+docker container run -d --network aws --name dynamo --rm -p 8000:8000 amazon/dynamodb-local
+sam deploy --stack-name todo-list-serverless-sam --s3-bucket mvicha-todo-list-serverless-sam --capabilities CAPABILITY_IAM
+aws cloudformation delete-stack --stack-name todo-list-serverless-sam
+
+sam local start-api --port 8080 --debug --docker-network aws
+aws dynamodb list-tables --endpoint-url http://localhost:8000
