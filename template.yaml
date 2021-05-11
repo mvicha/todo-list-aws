@@ -11,47 +11,104 @@ Globals:
     Timeout: 3
 
 Resources:
-  todoListFcnReadOnly:
+  todoListFcnList:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: todos/
-      Handler: todoTableClass.lambda_handler
+      Handler: list.list
       Runtime: python3.8
-      Policies: AWSLambdaDynamoDBExecutionRole
+      Policies:
+      - AmazonDynamoDBReadOnlyAccess
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref TodoDynamoDbTable
       Events:
         list:
           Type: Api
           Properties:
             Path: /
             Method: get
+  todoListFcnGet:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: todos/
+      Handler: get.get
+      Runtime: python3.8
+      Policies:
+      - AmazonDynamoDBReadOnlyAccess
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref TodoDynamoDbTable
+      Events:
         get:
           Type: Api
           Properties:
             Path: /{id}
             Method: get
+  todoListFcnTranslate:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: todos/
+      Handler: translate.translate
+      Runtime: python3.8
+      Policies:
+      - AmazonDynamoDBReadOnlyAccess
+      - TranslateReadOnly
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref TodoDynamoDbTable
+      Events:
         translate:
           Type: Api
           Properties:
             Path: /{id}/{target_language}
             Method: get
-  todoListFcnReadWrite:
+  todoListFcnCreate:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: todos/
-      Handler: todoTableClass.lambda_handler
+      Handler: create.create
       Runtime: python3.8
-      Policies: AmazonDynamoDBFullAccess
+      Policies:
+      - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref TodoDynamoDbTable
       Events:
         create:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /
             Method: post
+  todoListFcnUpdate:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: todos/
+      Handler: update.update
+      Runtime: python3.8
+      Policies:
+      - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref TodoDynamoDbTable
+      Events:
         update:
           Type: Api
           Properties:
             Path: /{id}
             Method: put
+  todoListFcnDelete:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: todos/
+      Handler: delete.delete
+      Runtime: python3.8
+      Policies:
+      - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref TodoDynamoDbTable
+      Events:
         delete:
           Type: Api
           Properties:
@@ -79,17 +136,25 @@ Outputs:
   todoListServerLessAPI:
     Description: "API Gateway endpoint URL for Prod stage for todo-list-serverless function"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/todo-list-serverless/"
-  todoListServerLessReadOnlyFunction:
-    Description: "todoListServerLessReadOnly Lambda Function ARN"
-    Value: !GetAtt todoListFcnReadOnly.Arn
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/todo-list-serverless/"
-  todoListServerLessReadWriteFunction:
-    Description: "todoListServerLessReadWrite Lambda Function ARN"
-    Value: !GetAtt todoListFcnReadWrite.Arn
-  todoListServerLessReadOnlyIamRole:
-    Description: "Implicit IAM Role created for todoListFcnReadOnly function"
-    Value: !GetAtt todoListFcnReadOnlyRole.Arn
-  todoListServerLessReadWriteIamRole:
-    Description: "Implicit IAM Role created for todoListFcnReadWrite function"
-    Value: !GetAtt todoListFcnReadWriteRole.Arn
+  todoListServerLessFcnList:
+    Description: "List Lambda Function ARN"
+    Value: !GetAtt todoListFcnList.Arn
+  todoListServerLessFcnGet:
+    Description: "Get Lambda Function ARN"
+    Value: !GetAtt todoListFcnGet.Arn
+  todoListServerLessFcnTranslate:
+    Description: "Translate Lambda Function ARN"
+    Value: !GetAtt todoListFcnTranslate.Arn
+  todoListServerLessFcnCreate:
+    Description: "Create Lambda Function ARN"
+    Value: !GetAtt todoListFcnCreate.Arn
+  todoListServerLessFcnUpdate:
+    Description: "Update Lambda Function ARN"
+    Value: !GetAtt todoListFcnUpdate.Arn
+  todoListServerLessFcnDelete:
+    Description: "Delete Lambda Function ARN"
+    Value: !GetAtt todoListFcnDelete.Arn
+  #todoListServerLessReadOnlyIamRole:
+  #  Description: "Implicit IAM Role created for todoListFcnList function"
+  #  Value: !GetAtt todoListFcnListRole.Arn
 

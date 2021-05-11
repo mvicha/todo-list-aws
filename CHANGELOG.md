@@ -10,3 +10,6 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Versión inicial de código
 - aws s3api create-bucket --bucket mvicha-todo-list-serverless-sam
+- sam template
+- lambda functions
+- lambda class
