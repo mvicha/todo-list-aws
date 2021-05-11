@@ -2,7 +2,10 @@ import os
 
 import boto3
 from todoTableClass import handler as todoTableClass
-dynamodb = boto3.resource('dynamodb')
+
+dynamodb = None
+if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
+    dynamodb = boto3.resource('dynamodb')
 
 def delete(event, context):
     tdDelete = todoTableClass(table = os.environ['DYNAMODB_TABLE'], dynamodb = dynamodb)

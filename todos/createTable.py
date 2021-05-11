@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 #from todos import decimalencoder
 import decimalencoder
@@ -7,12 +7,11 @@ import boto3
 from todoTableClass import handler as todoTableClass
 
 dynamodb = None
-if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
-    dynamodb = boto3.resource('dynamodb')
+create = True
 
-def get(event, context):
-    tdGet = todoTableClass(table = os.environ['DYNAMODB_TABLE'], dynamodb = dynamodb)
-    item = tdGet.get_todo(event['pathParameters']['id'])
+def createTable(event, context):
+    tdCreateTable = todoTableClass(table = os.environ['DYNAMODB_TABLE'], dynamodb = dynamodb, create = create)
+    item = tdCreateTable.create_todo_table()
 
     # create a response
     response = {

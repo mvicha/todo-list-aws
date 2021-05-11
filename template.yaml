@@ -20,7 +20,6 @@ Resources:
       Timeout: 30
       Policies:
       - AmazonDynamoDBReadOnlyAccess
-      - AmazonDynamoDBFullAccess
       Environment:
         Variables:
           DYNAMODB_TABLE: !Ref TodoDynamoDbTable
@@ -28,7 +27,7 @@ Resources:
         list:
           Type: Api
           Properties:
-            Path: /
+            Path: /todos/
             Method: get
   todoListFcnGet:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -39,7 +38,6 @@ Resources:
       Timeout: 30
       Policies:
       - AmazonDynamoDBReadOnlyAccess
-      - AmazonDynamoDBFullAccess
       Environment:
         Variables:
           DYNAMODB_TABLE: !Ref TodoDynamoDbTable
@@ -47,7 +45,7 @@ Resources:
         get:
           Type: Api
           Properties:
-            Path: /{id}
+            Path: /todos/{id}
             Method: get
   todoListFcnTranslate:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -58,7 +56,6 @@ Resources:
       Timeout: 30
       Policies:
       - AmazonDynamoDBReadOnlyAccess
-      - AmazonDynamoDBFullAccess
       - TranslateReadOnly
       Environment:
         Variables:
@@ -67,7 +64,7 @@ Resources:
         translate:
           Type: Api
           Properties:
-            Path: /{id}/{target_language}
+            Path: /todos/{id}/{target_language}
             Method: get
   todoListFcnCreate:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -85,8 +82,26 @@ Resources:
         create:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /
+            Path: /todos/
             Method: post
+  todoListFcnCreateTable:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: todos/
+      Handler: createTable.createTable
+      Runtime: python3.8
+      Timeout: 30
+      Policies:
+      - AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref TodoDynamoDbTable
+      Events:
+        create:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /todos/createTable/
+            Method: get
   todoListFcnUpdate:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -103,7 +118,7 @@ Resources:
         update:
           Type: Api
           Properties:
-            Path: /{id}
+            Path: /todos/{id}
             Method: put
   todoListFcnDelete:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -121,7 +136,7 @@ Resources:
         delete:
           Type: Api
           Properties:
-            Path: /{id}
+            Path: /todos/{id}
             Method: delete
   TodoDynamoDbTable:
     Type: AWS::DynamoDB::Table

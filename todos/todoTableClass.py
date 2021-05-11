@@ -8,10 +8,11 @@ import logging
 import os
 import decimalencoder
 
-
+#from botocore.vendored import requests
+from urllib import request
 
 class handler(object):
-    def __init__(self, table, dynamodb=None):
+    def __init__(self, table, dynamodb=None, create=None):
         self.tableName = table
         validate_todo_table = False
         if not dynamodb:
@@ -19,7 +20,8 @@ class handler(object):
             # when all the containers are in the same network.
             dynamodb = boto3.resource(
                 'dynamodb', endpoint_url='http://dynamo:8000', region_name='us-east-1') 
-            validate_todo_table = True
+            if not create:
+                validate_todo_table = True
         self.dynamodb = dynamodb
 
         if validate_todo_table:
@@ -32,10 +34,21 @@ class handler(object):
 
         try:
             response = client.describe_table(TableName=self.tableName)
+
+            return response
         except client.exceptions.ResourceNotFoundException:
             print("Create table")
-            self.create_todo_table()
-
+            try:
+                localIPAddressURL = "http://169.254.169.254/latest/meta-data/local-ipv4"
+                with request.urlopen(localIPAddressURL) as x:
+                    localIPAddress = x.read().decode('utf-8')
+                print(localIPAddress)
+                createTableURL = f"http://{localIPAddress}:8080/todos/createTable/"
+                response = request.urlopen(createTableURL)
+                return response
+            except Exception as e:
+                print("Exception: {}".format(e))
+                return e
 
     def create_todo_table(self):
         try:
@@ -67,7 +80,7 @@ class handler(object):
         if (table.table_status != 'ACTIVE'):
             raise AssertionError()
 
-        return table
+        return table.table_status
 
     def delete_todo_table(self):
         table = self.dynamodb.Table(self.tableName)

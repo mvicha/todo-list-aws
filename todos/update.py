@@ -7,7 +7,10 @@ import os
 import decimalencoder
 import boto3
 from todoTableClass import handler as todoTableClass
-dynamodb = boto3.resource('dynamodb')
+
+dynamodb = None
+if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
+    dynamodb = boto3.resource('dynamodb')
 
 def update(event, context):
     data = json.loads(event['body'])

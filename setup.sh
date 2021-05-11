@@ -26,7 +26,7 @@ python3.8 --version
 
 
 npm install -g serverless
-docker container run -d --name dynamo --rm -p 8000:8000 amazon/dynamodb-local
+docker container run -d --network aws --name dynamo --rm -p 8000:8000 amazon/dynamodb-local
 
 echo "REMEMBER TO SET SERVERLESS_ACCESS_KEY"
 echo "Add Serverless Provider Role in ORG"
