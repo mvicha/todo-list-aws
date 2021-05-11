@@ -10,85 +10,56 @@ import decimalencoder
 
 
 
-#def lambda_handler(event, context):
-#    """Sample pure Lambda function
-#
-#    Parameters
-#    ----------
-#    event: dict, required
-#        API Gateway Lambda Proxy Input Format
-#
-#        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
-#
-#    context: object, required
-#        Lambda Context runtime methods and attributes
-#
-#        Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
-#
-#    Returns
-#    ------
-#    API Gateway Lambda Proxy Output Format: dict
-#
-#        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
-#    """
-#
-#    if event['httpMethod'] == 'GET':
-#        if event['resource'] == '/':
-#            result = "LIST"
-#        if event['resource'] == '/{id}':
-#            result = "GET ID"
-#        if event['resource'] == '/{id}/{target_language}':
-#            result = "TRANSLATE ID"
-#    else:
-#        result = event
-#    # try:
-#    #     ip = requests.get("http://checkip.amazonaws.com/")
-#    # except requests.RequestException as e:
-#    #     # Send some context about this error to Lambda Logs
-#    #     print(e)
-#
-#    #     raise e
-#
-#    return {
-#        "statusCode": 200,
-#        #"body": json.dumps({
-#        #    "message": "hello world",
-#        #    # "location": ip.text.replace("\n", "")
-#        #}),
-#        "body": json.dumps(result),
-#    }
-
-
 class handler(object):
     def __init__(self, table, dynamodb=None):
         self.tableName = table
+        validate_todo_table = False
         if not dynamodb:
             # In this case dynamodb is the name of the docker container
             # when all the containers are in the same network.
             dynamodb = boto3.resource(
-                'dynamodb', endpoint_url='http://dynamodb:8000') 
+                'dynamodb', endpoint_url='http://dynamo:8000', region_name='us-east-1') 
+            validate_todo_table = True
         self.dynamodb = dynamodb
 
+        if validate_todo_table:
+            print("Going to validate table existance")
+            self.validate_todo_table()
+
+    # Function to validate if table exists
+    def validate_todo_table(self):
+        client = boto3.client('dynamodb', endpoint_url='http://dynamo:8000', region_name='us-east-1')
+
+        try:
+            response = client.describe_table(TableName=self.tableName)
+        except client.exceptions.ResourceNotFoundException:
+            print("Create table")
+            self.create_todo_table()
+
+
     def create_todo_table(self):
-        table = self.dynamodb.create_table(
-            TableName=self.tableName,
-            KeySchema=[
-                {
-                    'AttributeName': 'id',
-                    'KeyType': 'HASH'
+        try:
+            table = self.dynamodb.create_table(
+                TableName=self.tableName,
+                KeySchema=[
+                    {
+                        'AttributeName': 'id',
+                        'KeyType': 'HASH'
+                    }
+                ],
+                AttributeDefinitions=[
+                    {
+                        'AttributeName': 'id',
+                        'AttributeType': 'S'
+                    }
+                ],
+                ProvisionedThroughput={
+                    'ReadCapacityUnits': 1,
+                    'WriteCapacityUnits': 1
                 }
-            ],
-            AttributeDefinitions=[
-                {
-                    'AttributeName': 'id',
-                    'AttributeType': 'S'
-                }
-            ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 1,
-                'WriteCapacityUnits': 1
-            }
-        )
+            )
+        except Exception as e:
+            print("Create exception: {}".format(e))
 
         # Wait until the table exists.
         table.meta.client.get_waiter(
@@ -176,6 +147,6 @@ class handler(object):
         table = self.dynamodb.Table(self.tableName)
         table.delete_item(
             Key={
-                'id': event['pathParameters']['id']
+                'id': id
             }
         )

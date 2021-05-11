@@ -6,8 +6,6 @@ import decimalencoder
 import boto3
 from todoTableClass import handler as todoTableClass
 
-# Setup translate
-#client = boto3.client('translate')
 dynamodb = boto3.resource('dynamodb')
 
 def translate(event, context):

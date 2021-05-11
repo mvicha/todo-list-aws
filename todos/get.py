@@ -7,7 +7,6 @@ import boto3
 from todoTableClass import handler as todoTableClass
 dynamodb = boto3.resource('dynamodb')
 
-
 def get(event, context):
     tdGet = todoTableClass(table = os.environ['DYNAMODB_TABLE'], dynamodb = dynamodb)
     item = tdGet.get_todo(event['pathParameters']['id'])

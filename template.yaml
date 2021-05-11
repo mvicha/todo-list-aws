@@ -17,8 +17,10 @@ Resources:
       CodeUri: todos/
       Handler: list.list
       Runtime: python3.8
+      Timeout: 30
       Policies:
       - AmazonDynamoDBReadOnlyAccess
+      - AmazonDynamoDBFullAccess
       Environment:
         Variables:
           DYNAMODB_TABLE: !Ref TodoDynamoDbTable
@@ -34,8 +36,10 @@ Resources:
       CodeUri: todos/
       Handler: get.get
       Runtime: python3.8
+      Timeout: 30
       Policies:
       - AmazonDynamoDBReadOnlyAccess
+      - AmazonDynamoDBFullAccess
       Environment:
         Variables:
           DYNAMODB_TABLE: !Ref TodoDynamoDbTable
@@ -51,8 +55,10 @@ Resources:
       CodeUri: todos/
       Handler: translate.translate
       Runtime: python3.8
+      Timeout: 30
       Policies:
       - AmazonDynamoDBReadOnlyAccess
+      - AmazonDynamoDBFullAccess
       - TranslateReadOnly
       Environment:
         Variables:
@@ -69,6 +75,7 @@ Resources:
       CodeUri: todos/
       Handler: create.create
       Runtime: python3.8
+      Timeout: 30
       Policies:
       - AmazonDynamoDBFullAccess
       Environment:
@@ -86,6 +93,7 @@ Resources:
       CodeUri: todos/
       Handler: update.update
       Runtime: python3.8
+      Timeout: 30
       Policies:
       - AmazonDynamoDBFullAccess
       Environment:
@@ -103,6 +111,7 @@ Resources:
       CodeUri: todos/
       Handler: delete.delete
       Runtime: python3.8
+      Timeout: 30
       Policies:
       - AmazonDynamoDBFullAccess
       Environment:

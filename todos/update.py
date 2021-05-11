@@ -9,7 +9,6 @@ import boto3
 from todoTableClass import handler as todoTableClass
 dynamodb = boto3.resource('dynamodb')
 
-
 def update(event, context):
     data = json.loads(event['body'])
     if 'text' not in data or 'checked' not in data:

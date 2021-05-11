@@ -5,8 +5,10 @@ import os
 import decimalencoder
 import boto3
 from todoTableClass import handler as todoTableClass
-dynamodb = boto3.resource('dynamodb')
 
+dynamodb = None
+if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
+    dynamodb = boto3.resource('dynamodb')
 
 def list(event, context):
     tdList = todoTableClass(table = os.environ['DYNAMODB_TABLE'], dynamodb = dynamodb)
