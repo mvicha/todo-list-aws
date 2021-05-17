@@ -18,3 +18,5 @@ if [[ ${?} -ne 0 ]]; then
 else
   echo "PEP8 validation checks executed successfully"
 fi
+
+exit 1
