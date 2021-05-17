@@ -1,5 +1,8 @@
 pipeline {
   agent any
+  parameters {
+    string(name: 'GIT_BRANCH', defaultValue: 'develop', description: 'Git branch to clone')
+  }
   stages {
     stage('Clean') {
       steps {
