@@ -19,4 +19,4 @@ else
   echo "PEP8 validation checks executed successfully"
 fi
 
-exit 1
+exit 0
