@@ -130,7 +130,7 @@ dmypy.json
 
 # Terraform 
 terraform/.terraform.lock.hcl
-terraform/plan
+terraform/plan*
 terraform/resources/key.pem
 terraform/terraform.tfstate
 terraform/terraform

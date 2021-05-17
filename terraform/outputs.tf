@@ -27,3 +27,7 @@ output "jenkins_url" {
 output "public_ip" {
   value = aws_instance.jenkins.public_ip
 }
+
+output "ecr_url" {
+  value = aws_ecr_repository.ecr_jenkins.repository_url
+}

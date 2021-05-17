@@ -10,3 +10,8 @@ variable "instance_type" {
   description = "Tipo de instancia a levantar en AWS. Por defecto es t2.micro. Si se quedase corta, se podría ampliar a t2.small o t2.medium"
   default     = "t2.small"
 }
+
+variable "ecr_name" {
+  description = "Nombre del ECR que crearemos para guardar las imágenes de Docker para Jenkins"
+  default     = "mvicha-ecr-jenkins"
+}
