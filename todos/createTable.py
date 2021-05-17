@@ -1,16 +1,17 @@
 import json
 import os
 
-#from todos import decimalencoder
+# from todos import decimalencoder
 import decimalencoder
-import boto3
 from todoTableClass import handler as todoTableClass
 
 dynamodb = None
 create = True
 
+
 def createTable(event, context):
-    tdCreateTable = todoTableClass(table = os.environ['DYNAMODB_TABLE'], dynamodb = dynamodb, create = create)
+    tdCreateTable = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
+                                   dynamodb=dynamodb, create=create)
     item = tdCreateTable.create_todo_table()
 
     # create a response
@@ -20,4 +21,3 @@ def createTable(event, context):
     }
 
     return response
-

@@ -1,7 +1,7 @@
 import os
 import json
 
-#from todos import decimalencoder
+# from todos import decimalencoder
 import decimalencoder
 import boto3
 from todoTableClass import handler as todoTableClass
@@ -10,8 +10,10 @@ dynamodb = None
 if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
     dynamodb = boto3.resource('dynamodb')
 
+
 def get(event, context):
-    tdGet = todoTableClass(table = os.environ['DYNAMODB_TABLE'], dynamodb = dynamodb)
+    tdGet = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
+                           dynamodb=dynamodb)
     item = tdGet.get_todo(event['pathParameters']['id'])
 
     # create a response
@@ -21,4 +23,3 @@ def get(event, context):
     }
 
     return response
-

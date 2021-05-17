@@ -7,8 +7,10 @@ dynamodb = None
 if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
     dynamodb = boto3.resource('dynamodb')
 
+
 def delete(event, context):
-    tdDelete = todoTableClass(table = os.environ['DYNAMODB_TABLE'], dynamodb = dynamodb)
+    tdDelete = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
+                              dynamodb=dynamodb)
     tdDelete.delete_todo(event['pathParameters']['id'])
 
     # create a response

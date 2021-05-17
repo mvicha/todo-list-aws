@@ -90,7 +90,7 @@ class TestDatabaseFunctions(unittest.TestCase):
             get_todo(
                 self.uuid,
                 self.dynamodb)['Item']['text'])
-    
+
     def test_list_todo(self):
         from ToDoPutItem import put_todo
         from ToDoListItems import list_todo
@@ -105,7 +105,6 @@ class TestDatabaseFunctions(unittest.TestCase):
         put_todo(self.text, self.uuid, self.dynamodb)
         self.assertEqual(200, list_todo(self.dynamodb)[
                          'ResponseMetadata']['HTTPStatusCode'])
-
 
     def test_update_todo(self):
         from ToDoPutItem import put_todo
@@ -132,7 +131,6 @@ class TestDatabaseFunctions(unittest.TestCase):
             get_todo(
                 self.uuid,
                 self.dynamodb)['Item']['text'])
-
 
     def test_update_todo_error(self):
         from ToDoPutItem import put_todo
@@ -189,7 +187,6 @@ class TestDatabaseFunctions(unittest.TestCase):
         # Testing file functions
         # Table local
         self.assertRaises(TypeError, delete_todo("", self.dynamodb))
-
 
     def test_python_files(self):
         import ToDoPutItem

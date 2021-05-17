@@ -1,15 +1,16 @@
 import boto3
-from botocore.exceptions import ClientError
+# from botocore.exceptions import ClientError
 import time
 import uuid
 
-import json
-import logging
-import os
-import decimalencoder
+# import json
+# import logging
+# import os
+# import decimalencoder
 
-#from botocore.vendored import requests
-from urllib import request
+# from botocore.vendored import requests
+from urllib3 import request
+
 
 class handler(object):
     def __init__(self, table, dynamodb=None, create=None):
@@ -19,7 +20,8 @@ class handler(object):
             # In this case dynamodb is the name of the docker container
             # when all the containers are in the same network.
             dynamodb = boto3.resource(
-                'dynamodb', endpoint_url='http://dynamo:8000', region_name='us-east-1') 
+                       'dynamodb', endpoint_url='http://dynamo:8000',
+                       region_name='us-east-1')
             if not create:
                 validate_todo_table = True
         self.dynamodb = dynamodb
@@ -30,7 +32,9 @@ class handler(object):
 
     # Function to validate if table exists
     def validate_todo_table(self):
-        client = boto3.client('dynamodb', endpoint_url='http://dynamo:8000', region_name='us-east-1')
+        client = boto3.client(
+                 'dynamodb', endpoint_url='http://dynamo:8000',
+                 region_name='us-east-1')
 
         try:
             response = client.describe_table(TableName=self.tableName)
@@ -39,11 +43,14 @@ class handler(object):
         except client.exceptions.ResourceNotFoundException:
             print("Create table")
             try:
-                localIPAddressURL = "http://169.254.169.254/latest/meta-data/local-ipv4"
+                awsURL = "http://169.254.169.254/latest/meta-data/local-ipv4"
+                localIPAddressURL = awsURL
                 with request.urlopen(localIPAddressURL) as x:
                     localIPAddress = x.read().decode('utf-8')
                 print(localIPAddress)
-                createTableURL = f"http://{localIPAddress}:8080/todos/createTable/"
+                createTableURL = "http://"
+                createTableURL += {localIPAddress}
+                createTableURL += ":8080/todos/createTable/"
                 response = request.urlopen(createTableURL)
                 return response
             except Exception as e:
@@ -123,12 +130,13 @@ class handler(object):
 
         return result['Item']
 
-    def translate_todo(self, text, target_language, source_language = 'auto'):
+    def translate_todo(self, text, target_language,
+                       source_language='auto'):
         client = boto3.client('translate')
 
         result = client.translate_text(Text=text,
-                                        SourceLanguageCode=source_language,
-                                        TargetLanguageCode=target_language)
+                                       SourceLanguageCode=source_language,
+                                       TargetLanguageCode=target_language)
         return result
 
     def update_todo(self, text, id, checked):
@@ -155,7 +163,7 @@ class handler(object):
         )
 
         return result
-    
+
     def delete_todo(self, id):
         table = self.dynamodb.Table(self.tableName)
         table.delete_item(
