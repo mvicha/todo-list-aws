@@ -87,7 +87,7 @@ module "key_pair" {
 resource "aws_instance" "jenkins" {
   ami           = var.ami_id # us-east-1
   instance_type = var.instance_type
-  key_name      = module.key_pair.this_key_pair_key_name
+  key_name      = module.key_pair.key_pair_key_name
 
   security_groups = [aws_security_group.allow_all.name]
   tags = {
