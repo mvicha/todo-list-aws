@@ -7,8 +7,10 @@ pipeline {
 
   stages {
     stage('Clean') {
-      deleteDir()
-      sh 'printenv'
+      steps {
+        deleteDir()
+        sh 'printenv'
+      }
     }
   
     stage('Debug') {
