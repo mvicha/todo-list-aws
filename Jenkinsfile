@@ -1,10 +1,11 @@
 import java.time.*
 
 Date now = new Date()
-int timeInSeconds = now.getTime()
+Integer timeInSeconds = now.getTime()
 if (timeInSeconds < 0) {
-  println(timeInSeconds)
+  println("Time is lower than 0: " + timeInSeconds.toString())
   timeInSeconds = (timeInSeconds * -1)
+  println("Fixed Time is now: " + timeInSeconds.toString())
 }
 def CUSTOM_NET_NAME = "aws-${timeInSeconds}"
 
@@ -35,7 +36,7 @@ node {
   }
 
   stage('Start DynamoDB / Test environment') {
-    sh "docker container run --name dynamo-env-${timeInSeconds} --network ${CUSTOM_NET_NAME} -d --rm -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws/credentials:/root/.aws/credentials -v \${HOME}/.aws/config:/root/.aws/config -v \${HOME}/.docker/config.json:/root/.docker/config.json -v \${PWD}:/opt/todo-list-serverless 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-dynamo:latest /opt/todo-list-serverless/test"
+    sh "docker container run --name dynamo-env-${timeInSeconds} --network ${CUSTOM_NET_NAME} -d -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws/credentials:/root/.aws/credentials -v \${HOME}/.aws/config:/root/.aws/config -v \${HOME}/.docker/config.json:/root/.docker/config.json -v \${PWD}:/opt/todo-list-serverless 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-dynamo:latest"
   }
 
   stage('Run tests 1/2 - Static tests') {

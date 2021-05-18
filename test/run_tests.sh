@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export PATH=${HOME}/.local/bin:${PATH}
+
 echo 'Run static code check'
 result=$(radon cc /opt/todo-list-serverless/ -a -nc)
 
