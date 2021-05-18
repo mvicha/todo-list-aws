@@ -35,15 +35,15 @@ node {
   }
 
   stage('Run tests 1/2 - Static tests') {
-    sh "docker container exec dynamo=env-${timeInSeconds} /opt/todo-list-serverless/test/run_tests.sh"
+    sh "docker container exec dynamo-env-${timeInSeconds} /opt/todo-list-serverless/test/run_tests.sh"
   }
 
   stage('Run tests 2/2 - unittest') {
-    sh "docker container exec dynamo=env-${timeInSeconds} /opt/todo-list-serverless/test/run_unittest.sh"
+    sh "docker container exec dynamo-env-${timeInSeconds} /opt/todo-list-serverless/test/run_unittest.sh"
   }
 
   stage('Package application') {
-    sh "docker container exec dynamo=env-${timeInSeconds} sam package -t /opt/todo-list-serverless/template.yaml --debug --s3-bucket es-unir-staging-s3-95853-artifacts"
+    sh "docker container exec dynamo-env-${timeInSeconds} sam package -t /opt/todo-list-serverless/template.yaml --debug --s3-bucket es-unir-staging-s3-95853-artifacts"
   }
 
   stage('Remove local DynamoDB container') {
