@@ -48,7 +48,7 @@ node {
   }
 
   stage('Package application') {
-    sh "docker container exec dynamo-env-${timeInSeconds} sam package -t /opt/todo-list-serverless/template.yaml --debug --s3-bucket es-unir-staging-s3-95853-artifacts"
+    sh "docker container exec dynamo-env-${timeInSeconds} /home/dynamodblocal/.local/bin/sam package -t /opt/todo-list-serverless/template.yaml --debug --s3-bucket es-unir-staging-s3-95853-artifacts"
   }
 
   stage('Remove local DynamoDB container') {
