@@ -2,6 +2,10 @@ import java.time.*
 
 Date now = new Date()
 int timeInSeconds = now.getTime()
+if (timeInSeconds < 0) {
+  println(timeInSeconds)
+  timeInSeconds = (timeInSeconds * -1)
+}
 def CUSTOM_NET_NAME = "aws-${timeInSeconds}"
 
 node {
