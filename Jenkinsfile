@@ -5,7 +5,7 @@ int timeInSeconds = now.getTime()
 def CUSTOM_NET_NAME = "aws-${timeInSeconds}"
 
 node {
-  /* stage('Clean') {
+  stage('Clean') {
     deleteDir()
     sh 'printenv'
   }
@@ -13,7 +13,7 @@ node {
   stage('Debug') {
     sh 'pwd'
     sh 'ls -la'
-  } */
+  }
 
   stage('Checkout') {
     echo 'Checkout SCM'
