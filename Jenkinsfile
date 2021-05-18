@@ -30,25 +30,28 @@ node {
     sh "docker network create ${CUSTOM_NET_NAME}"
   }
 
-  stage('Run tests 1/2 - Static tests') {
-    echo 'Run tests'
-    sh "docker container run --network ${CUSTOM_NET_NAME} --rm -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws/credentials:/root/.aws/credentials -v \${HOME}/.aws/config:/root/.aws/config -v \${HOME}/.docker/config.json:/root/.docker/config.json -v \${PWD}:/opt/todo-list-serverless 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-jenkins:latest /opt/todo-list-serverless/test/run_tests.sh"
+  stage('Start DynamoDB / Test environment') {
+    sh "docker container run --name dynamo-env-${timeInSeconds} --network ${CUSTOM_NET_NAME} -d --rm -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws/credentials:/root/.aws/credentials -v \${HOME}/.aws/config:/root/.aws/config -v \${HOME}/.docker/config.json:/root/.docker/config.json -v \${PWD}:/opt/todo-list-serverless 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-dynamo:latest /opt/todo-list-serverless/test
   }
 
-  stage('Run local DynamoDB for testing') {
-    echo 'Run local dynamodb'
-    sh "docker container run -d --network ${CUSTOM_NET_NAME} --name dynamo-${timeInSeconds} --rm amazon/dynamodb-local:latest"
+  stage('Run tests 1/2 - Static tests') {
+    sh "docker container exec dynamo=env-${timeInSeconds} /opt/todo-list-serverless/test/run_tests.sh"
   }
 
   stage('Run tests 2/2 - unittest') {
-    sh "docker container run --network ${CUSTOM_NET_NAME} --link dynamo-${timeInSeconds}:dynamo --rm -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws/credentials:/root/.aws/credentials -v \${HOME}/.aws/config:/root/.aws/config -v \${HOME}/.docker/config.json:/root/.docker/config.json -v \${PWD}:/opt/todo-list-serverless 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-jenkins:latest /opt/todo-list-serverless/test/run_unittest.sh"
+    sh "docker container exec dynamo=env-${timeInSeconds} /opt/todo-list-serverless/test/run_unittest.sh"
+  }
+
+  stage('Package application') {
+    sh "docker container exec dynamo=env-${timeInSeconds} sam package -t /opt/todo-list-serverless/template.yaml --debug --s3-bucket es-unir-staging-s3-95853-artifacts"
   }
 
   stage('Remove local DynamoDB container') {
-    sh "docker container rm -f dynamo-${timeInSeconds}"
+    sh "docker container rm -f dynamo-env-${timeInSeconds}"
   }
 
   stage('Remove docker network') {
     sh "docker network rm ${CUSTOM_NET_NAME}"
   }
+
 }

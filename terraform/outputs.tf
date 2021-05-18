@@ -31,3 +31,7 @@ output "public_ip" {
 output "ecr_url" {
   value = aws_ecr_repository.ecr_jenkins.repository_url
 }
+
+output "ecr_dynamo_url" {
+  value = aws_ecr_repository.ecr_dynamo.repository_url
+}
