@@ -138,6 +138,19 @@ Resources:
           Properties:
             Path: /todos/{id}
             Method: delete
+  # todoListFcnTest:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: todos/
+  #     Handler: test_functions.functions
+  #     Environment:
+  #       Variables:
+  #         stgname: "staging"
+  #         svcname: "useless"
+  #     Events:
+  #       Path: /todos/runfulltesting
+  #       Method: get
+  #       Private: true
   TodoDynamoDbTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain

@@ -47,8 +47,12 @@ node {
     sh "docker container exec dynamo-env-${timeInSeconds} /opt/todo-list-serverless/test/run_unittest.sh"
   }
 
-  stage('Package application') {
-    sh "docker container exec dynamo-env-${timeInSeconds} /home/dynamodblocal/.local/bin/sam package -t /opt/todo-list-serverless/template.yaml --debug --s3-bucket es-unir-staging-s3-95853-artifacts"
+  # stage('Package application') {
+  #   sh "docker container exec dynamo-env-${timeInSeconds} /home/dynamodblocal/.local/bin/sam package -t /opt/todo-list-serverless/template.yaml --debug --s3-bucket es-unir-staging-s3-95853-artifacts --force-upload"
+  # }
+
+  stage('Deploy application') {
+    sh "docker container exec dynamo-env-${timeInSeconds} /home/dynamodblocal/.local/bin/sam deploy -t /opt/todo-list-serverless/template.yaml --debug --force-upload --stack-name todo-list-serverless-staging --debug --s3-bucket es-unir-staging-s3-95853-artifacts --capabilities CAPABILITY_IAM"
   }
 
   stage('Remove local DynamoDB container') {
