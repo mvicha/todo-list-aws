@@ -14,10 +14,10 @@ Resources:
   todoListAPI:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: 'staging'
+      StageName: staging
       Tags:
-        - Key: "env"
-          Value: "staging"
+        - Key: env
+          Value: staging
   todoListFcnList:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -197,7 +197,7 @@ Outputs:
   todoListServerLessAPI:
     Description: "API Gateway endpoint URL for Prod stage for todo-list-aws function"
     # Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
-    Value: !Sub "https://${todoListAPI.RootResourceId}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+    Value: !Sub "https://${todoListAPI.RootResourceId}.execute-api.${AWS::Region}.amazonaws.com/${todoListAPI.StageName}"
   todoListServerLessFcnList:
     Description: "List Lambda Function ARN"
     Value: !GetAtt todoListFcnList.Arn
