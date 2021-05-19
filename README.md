@@ -371,3 +371,5 @@ aws cloudformation delete-stack --stack-name todo-list-serverless-sam
 
 sam local start-api --port 8080 --debug --docker-network aws
 aws dynamodb list-tables --endpoint-url http://localhost:8000
+
+aws cloudformation describe-stacks --stack-name todo-list-serverless-staging --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text
