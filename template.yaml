@@ -192,7 +192,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   todoListAPI:
     Description: "API ID"
-    Value: !Sub "${todoListAPI.RootResourceId}""
+    Value: !GetAtt todoListAPI.RootResourceId
   todoListServerLessAPI:
     Description: "API Gateway endpoint URL for Prod stage for todo-list-aws function"
     # Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
