@@ -62,5 +62,4 @@ node {
   stage('Remove docker network') {
     sh "docker network rm ${CUSTOM_NET_NAME}"
   }
-
 }

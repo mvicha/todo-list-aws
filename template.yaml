@@ -11,6 +11,12 @@ Globals:
     Timeout: 3
 
 Resources:
+  todoListAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: 'staging'
+      Tags:
+        env: 'staging'
   todoListFcnList:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -29,6 +35,8 @@ Resources:
           Properties:
             Path: /todos/
             Method: get
+            RestApiId:
+              Ref: todoListAPI
   todoListFcnGet:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -47,6 +55,8 @@ Resources:
           Properties:
             Path: /todos/{id}
             Method: get
+            RestApiId:
+              Ref: todoListAPI
   todoListFcnTranslate:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -66,6 +76,8 @@ Resources:
           Properties:
             Path: /todos/{id}/{target_language}
             Method: get
+            RestApiId:
+              Ref: todoListAPI
   todoListFcnCreate:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -84,6 +96,8 @@ Resources:
           Properties:
             Path: /todos/
             Method: post
+            RestApiId:
+              Ref: todoListAPI
   todoListFcnCreateTable:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -102,6 +116,8 @@ Resources:
           Properties:
             Path: /todos/createTable/
             Method: get
+            RestApiId:
+              Ref: todoListAPI
   todoListFcnUpdate:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -120,6 +136,8 @@ Resources:
           Properties:
             Path: /todos/{id}
             Method: put
+            RestApiId:
+              Ref: todoListAPI
   todoListFcnDelete:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -138,6 +156,8 @@ Resources:
           Properties:
             Path: /todos/{id}
             Method: delete
+            RestApiId:
+              Ref: todoListAPI
   # todoListFcnTest:
   #   Type: AWS::Serverless::Function
   #   Properties:
@@ -170,9 +190,13 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  todoListAPI:
+    Description: "API ID"
+    Value: !Sub "${todoListAPI.RootResourceId}""
   todoListServerLessAPI:
     Description: "API Gateway endpoint URL for Prod stage for todo-list-aws function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+    # Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+    Value: !Sub "https://${todoListAPI.RootResourceId}.execute-api.${AWS::Region}.amazonaws.com/Prod"
   todoListServerLessFcnList:
     Description: "List Lambda Function ARN"
     Value: !GetAtt todoListFcnList.Arn
