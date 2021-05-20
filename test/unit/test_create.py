@@ -1,13 +1,12 @@
 import os
 import json
 import pytest
-from pytest_bdd import scenario, given, when, then, parsers
 
 from test_class import remoteTableClass
 
 
 class context():
-    def __init__ (self):
+    def __init__(self):
         self.context_arr = {}
 
     def append(self, context_id, todo_id):
@@ -26,18 +25,20 @@ class context():
 context_class = context()
 
 
-@pytest.mark.parametrize("context_id, todo_text, todo_expected_code, todo_expected_text", [
-    (0, 'Este es el primer texto', 200, "Este es el primer texto"),
-    (1, 'Este es el segundo texto', 200, "Este es el segundo texto"),
-    (2, None, 500, "Este esta mal")
-])
+@pytest.mark.parametrize(
+    "context_id, todo_text, todo_expected_code, todo_expected_text", [
+        (0, 'Este es el primer texto', 200, "Este es el primer texto"),
+        (1, 'Este es el segundo texto', 200, "Este es el segundo texto"),
+        (2, None, 500, "Este esta mal")
+    ])
 def test_create(context_id, todo_text, todo_expected_code, todo_expected_text):
     if todo_text:
-        create_text = { 'text': todo_text }
+        create_text = {'text': todo_text}
     else:
         create_text = {}
 
-    var_test_create = remoteTableClass().launchEvent(os.environ["ENDPOINT_URL"], 'create', json.dumps(create_text))
+    var_test_create = remoteTableClass().launchEvent(
+        os.environ["ENDPOINT_URL"], 'create', json.dumps(create_text))
     assert var_test_create['statusCode'] == todo_expected_code
 
     text_return = json.loads(var_test_create['body'])
@@ -55,13 +56,13 @@ def test_create(context_id, todo_text, todo_expected_code, todo_expected_text):
     assert text_return == todo_expected_text
 
 
-@then('Validate list works')
 @pytest.mark.parametrize("todo_expected_code, todo_expected_text", [
     (200, 'Este es el primer texto'),
     (200, 'Este es el segundo texto')
 ])
 def test_list(todo_expected_code, todo_expected_text):
-    var_test_list = remoteTableClass().launchEvent(os.environ["ENDPOINT_URL"], 'list')
+    var_test_list = remoteTableClass().launchEvent(
+        os.environ["ENDPOINT_URL"], 'list')
     assert len(var_test_list) > 0
 
     text_return = json.loads(var_test_list['body'])
@@ -80,14 +81,14 @@ def test_list(todo_expected_code, todo_expected_text):
     assert todo_expected_text in arrResult
 
 
-@then('Validate get works')
 @pytest.mark.parametrize("context_id, todo_expected_text", [
     (0, 'Este es el primer texto'),
     (1, 'Este es el segundo texto')
 ])
 def test_get(context_id, todo_expected_text):
     todo_id = context_class.getItem(context_id)
-    var_test_get = remoteTableClass().launchEvent(os.environ["ENDPOINT_URL"] + "/" + todo_id, 'get')
+    var_test_get = remoteTableClass().launchEvent(
+        os.environ["ENDPOINT_URL"] + "/" + todo_id, 'get')
 
     text_return = json.loads(var_test_get['body'])
     if 'Items' in text_return:
@@ -101,7 +102,7 @@ def test_get(context_id, todo_expected_text):
 
     assert text_return == todo_expected_text
 
-@then('Validate translate works')
+
 @pytest.mark.parametrize("context_id, target_language, todo_expected_text", [
     (0, 'en', 'This is the first text'),
     (0, 'fr', 'Ceci est le premier texte'),
@@ -111,7 +112,12 @@ def test_get(context_id, todo_expected_text):
 ])
 def test_translate(context_id, target_language, todo_expected_text):
     todo_id = context_class.getItem(context_id)
-    var_test_translate = remoteTableClass().launchEvent(os.environ["ENDPOINT_URL"] + "/" + todo_id + "/" + target_language, 'translate')
+    var_test_translate = remoteTableClass().launchEvent(
+        os.environ["ENDPOINT_URL"] +
+        "/" +
+        todo_id +
+        "/" +
+        target_language, 'translate')
 
     text_return = json.loads(var_test_translate['body'])
     if 'Items' in text_return:
@@ -125,18 +131,30 @@ def test_translate(context_id, target_language, todo_expected_text):
 
     assert text_return == todo_expected_text
 
-@then('Validate update works')
-@pytest.mark.parametrize("context_id, todo_text, todo_checked, todo_expected_code, todo_expected_text", [
-    (0, 'Este es el primer texto modificado', True, 200, 'Este es el primer texto modificado'),
-    (1, 'Este es el segundo texto modificado', False, 200, 'Este es el segundo texto modificado')
-])
-def test_update(context_id, todo_text, todo_checked, todo_expected_code, todo_expected_text):
+
+@pytest.mark.parametrize(
+    "context_id, todo_text, \
+    todo_checked, todo_expected_code, \
+    todo_expected_text", [
+        (0, 'Este es el primer texto modificado',
+            True, 200,
+            'Este es el primer texto modificado'),
+        (1, 'Este es el segundo texto modificado',
+            False, 200,
+            'Este es el segundo texto modificado')
+    ])
+def test_update(
+    context_id, todo_text, todo_checked,
+        todo_expected_code, todo_expected_text):
     todo_id = context_class.getItem(context_id)
     update_text = {
         'text': todo_text,
         'checked': todo_checked
     }
-    var_test_update = remoteTableClass().launchEvent(os.environ["ENDPOINT_URL"] + "/" + todo_id, 'update', json.dumps(update_text))
+    var_test_update = remoteTableClass().launchEvent(
+        os.environ["ENDPOINT_URL"] +
+        "/" +
+        todo_id, 'update', json.dumps(update_text))
     assert var_test_update['statusCode'] == todo_expected_code
 
     text_return = json.loads(var_test_update['body'])
@@ -153,15 +171,17 @@ def test_update(context_id, todo_text, todo_checked, todo_expected_code, todo_ex
 
     assert text_return == todo_expected_text
 
-@then('Validate delete works')
-@pytest.mark.parametrize("context_id, todo_expected_code, todo_expected_text", [
-    (0, 200, 'Todo deleted successfully'),
-    (1, 200, 'Todo deleted successfully')
-])
+
+@pytest.mark.parametrize(
+    "context_id, todo_expected_code, todo_expected_text", [
+        (0, 200, 'Todo deleted successfully'),
+        (1, 200, 'Todo deleted successfully')
+    ])
 def test_delete(context_id, todo_expected_code, todo_expected_text):
     todo_id = context_class.getItem(context_id)
 
-    var_test_delete = remoteTableClass().launchEvent(os.environ["ENDPOINT_URL"] + "/" + todo_id, 'delete')
+    var_test_delete = remoteTableClass().launchEvent(
+        os.environ["ENDPOINT_URL"] + "/" + todo_id, 'delete')
     assert var_test_delete['statusCode'] == todo_expected_code
 
     text_return = json.loads(var_test_delete['body'])

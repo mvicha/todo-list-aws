@@ -1,9 +1,6 @@
-import os
-import pytest
 import json
-import boto3
 import urllib3
-import sys
+
 
 class remoteTableClass():
     def launchEvent(self, endpoint_url, action, params=None):
