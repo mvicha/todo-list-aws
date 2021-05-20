@@ -3,7 +3,7 @@
 export PATH=${HOME}/.local/bin:${PATH}
 
 echo 'Run static code check'
-result=$(radon cc /opt/todo-list-serverless/ -a -nc)
+result=$(radon cc /opt/todo-list-aws/ -a -nc)
 
 if [[ -n "${result}" ]]; then
   echo ${result}
@@ -13,7 +13,7 @@ else
 fi
 
 echo 'Run pep8 validations'
-flake8 /opt/todo-list-serverless/
+flake8 /opt/todo-list-aws/
 if [[ ${?} -ne 0 ]]; then
   echo ${result}
   exit 1
