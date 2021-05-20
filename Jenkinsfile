@@ -32,7 +32,7 @@ def testAndDeploy(timeInSeconds) {
     sh "docker container exec dynamo-env-${timeInSeconds} /home/dynamodblocal/.local/bin/sam deploy -t /opt/todo-list-aws/template.yaml --debug --force-upload --stack-name todo-list-aws-staging --debug --s3-bucket es-unir-staging-s3-95853-artifacts --capabilities CAPABILITY_IAM"
   }
 
-  stage('Run final testing) {
+  stage('Run final testing') {
     sh "docker container exec dynamo-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh"
   }
 }
