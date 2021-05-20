@@ -176,7 +176,7 @@ Outputs:
   todoListResourceApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for todo-list-aws function"
     # Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/staging"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/todos"
   todoListResourceFcnList:
     Description: "List Lambda Function ARN"
     Value: !GetAtt todoListFcnList.Arn
