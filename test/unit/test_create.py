@@ -28,8 +28,7 @@ context_class = context()
 @pytest.mark.parametrize(
     "context_id, todo_text, todo_expected_code, todo_expected_text", [
         (0, 'Este es el primer texto', 200, "Este es el primer texto"),
-        (1, 'Este es el segundo texto', 200, "Este es el segundo texto"),
-        (2, None, 500, "Este esta mal")
+        (1, 'Este es el segundo texto', 200, "Este es el segundo texto")
     ])
 def test_create(context_id, todo_text, todo_expected_code, todo_expected_text):
     if todo_text:
@@ -192,3 +191,4 @@ def test_delete(context_id, todo_expected_code, todo_expected_text):
         text_return = text_return['errorMsg']
 
     assert text_return == todo_expected_text
+    
