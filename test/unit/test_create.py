@@ -191,4 +191,3 @@ def test_delete(context_id, todo_expected_code, todo_expected_text):
         text_return = text_return['errorMsg']
 
     assert text_return == todo_expected_text
-    
