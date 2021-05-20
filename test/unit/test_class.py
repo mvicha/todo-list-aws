@@ -73,4 +73,3 @@ class remoteTableClass():
             "body": json.dumps(responseBody)
         }
         return response
-    
