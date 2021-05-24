@@ -10,7 +10,7 @@ if (timeInSeconds < 0) {
 
 if (GIT_BRANCH == "origin/develop") {
   s3bucket = "es-unir-staging-s3-95853-artifacts"
-  doLocal = false
+  doLocal = true
 } else if (GIT_BRANCH == "origin/master") {
   s3bucket = "es-unir-staging-s3-95853-artifacts"
   doLocal = false
@@ -82,13 +82,17 @@ def localDynamo(action, timeInSeconds, doLocal) {
 def testApp(timeInSeconds, doLocal, testCase) {
   switch(testCase) {
     case 'static':
-      stage('Run tests 1/2 - Static tests') {
-        sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_tests.sh"
+      if (doLocal) {
+        stage('Run tests 1/2 - Static tests') {
+          sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_tests.sh"
+        }
       }
       break;
     case 'unittest':
-      stage('Run tests 2/2 - unittest') {
-        sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_unittest.sh"
+      if (doLocal) {
+        stage('Run tests 2/2 - unittest') {
+          sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_unittest.sh"
+        }
       }
       break;
     case 'integration':
