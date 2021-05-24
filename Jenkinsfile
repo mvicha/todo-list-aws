@@ -8,17 +8,6 @@ if (timeInSeconds < 0) {
   println("Fixed Time is now: " + timeInSeconds.toString())
 }
 
-curBranch = sh "git branch --show-current"
-if (curBranch == "develop") {
-  s3bucket = "es-unir-staging-s3-95853-artifacts"
-  doLocal = false
-} else if (curBranch == "master") {
-  s3bucket = "es-unir-staging-s3-95853-artifacts"
-  doLocal = false
-} else {
-  doLocal = true
-}
-
 def cleanUp(debugenv) {
   stage('Clean') {
     deleteDir()
@@ -28,7 +17,7 @@ def cleanUp(debugenv) {
   }
 }
 
-def dockerNetwork(action, doLocal) {
+def dockerNetwork(action, timeInSeconds, doLocal) {
   if (doLocal) {
     switch(action) {
       case 'create':
@@ -75,14 +64,14 @@ def localDynamo(action, timeInSeconds, doLocal) {
       case 'remove':
         stage('Remove local dynamodb') {
           sh "docker container rm -f dynamo-${timeInSeconds}"
-          break;
         }
+        break;
     }
   }
 }
 
 def testApp(timeInSeconds, doLocal, testCase) {
-  switch(testNumber) {
+  switch(testCase) {
     case 'static':
       stage('Run tests 1/2 - Static tests') {
         sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_tests.sh"
@@ -107,7 +96,7 @@ def testApp(timeInSeconds, doLocal, testCase) {
 def startLocalApi(timeInSeconds, doLocal) {
   if (doLocal) {
     stage("Start sam local-api") {
-      sh "docker container exec -d python-env-${timeInSeconds} sam local start-api --region us-east-1 --port 8080 --debug --docker-network aws-${timeInSeconds}"
+      sh "docker container exec -d python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --port 8080 --debug --docker-network aws-${timeInSeconds}"
     }
   }
 }
@@ -115,7 +104,7 @@ def startLocalApi(timeInSeconds, doLocal) {
 def deployApp(timeInSeconds, doLocal) {
   if (!doLocal) {
     stage('Deploy application') {
-      sh "docker container exec python-env-${timeInSeconds} /home/dynamodblocal/.local/bin/sam deploy -t /opt/todo-list-aws/template.yaml --debug --force-upload --stack-name todo-list-aws-staging --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_IAM"
+      sh "docker container exec python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy -t /opt/todo-list-aws/template.yaml --debug --force-upload --stack-name todo-list-aws-staging --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_IAM"
     }
   }
 }
@@ -126,11 +115,26 @@ def printFailure(e) {
 
 
 node {
+
   cleanUp(true)
 
   stage('Checkout') {
     echo 'Checkout SCM'
     checkout scm
+  }
+
+  curBranch = sh (
+                script: "git branch --show-current",
+                returnStdout: true
+              ).trim()
+  if (curBranch == "develop") {
+    s3bucket = "es-unir-staging-s3-95853-artifacts"
+    doLocal = false
+  } else if (curBranch == "master") {
+    s3bucket = "es-unir-staging-s3-95853-artifacts"
+    doLocal = false
+  } else {
+    doLocal = true
   }
 
   stage('Pull docker images') {
@@ -139,22 +143,31 @@ node {
   }
 
   try {
-    dockerNetwork('create', doLocal)
+    dockerNetwork('create', timeInSeconds, doLocal)
     try {
       pythonBuildEnv('create', timeInSeconds, doLocal)
       try {
         localDynamo('create', timeInSeconds, doLocal)
-        testApp(timeInSeconds, doLocal, 'static')
-        testApp(timeInSeconds, doLocal, 'unittest')
-        startLocalApi(timeInSeconds, doLocal)
-        deployApp(timeInSeconds, doLocal)
-      } catch(r) {
-        printFailure(r)
+        try {
+          testApp(timeInSeconds, doLocal, 'static')
+          testApp(timeInSeconds, doLocal, 'unittest')
+          startLocalApi(timeInSeconds, doLocal)
+          deployApp(timeInSeconds, doLocal)
+          testApp(timeInSeconds, doLocal, 'integration')
+        } catch(r) {
+          printFailure(r)
+        } finally {
+          localDynamo('remove', timeInSeconds, doLocal)
+        }
+      } catch(ld) {
+        printFailure(ld)
       } finally {
         pythonBuildEnv('remove', timeInSeconds, doLocal)
       }
     } catch(be) {
       printFailure(be)
+    } finally {
+      dockerNetwork('remove', timeInSeconds, doLocal)
     }
   } catch(dn) {
     printFailure(dn)
