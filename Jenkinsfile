@@ -8,6 +8,17 @@ if (timeInSeconds < 0) {
   println("Fixed Time is now: " + timeInSeconds.toString())
 }
 
+if (GIT_BRANCH == "origin/develop") {
+  s3bucket = "es-unir-staging-s3-95853-artifacts"
+  doLocal = false
+} else if (GIT_BRANCH == "origin/master") {
+  s3bucket = "es-unir-staging-s3-95853-artifacts"
+  doLocal = false
+} else {
+  doLocal = true
+}
+
+
 def cleanUp(debugenv) {
   stage('Clean') {
     deleteDir()
@@ -17,20 +28,18 @@ def cleanUp(debugenv) {
   }
 }
 
-def dockerNetwork(action, timeInSeconds, doLocal) {
-  if (doLocal) {
-    switch(action) {
-      case 'create':
-        stage('Create Docker Network') {
-          sh "docker network create aws-${timeInSeconds}"
-        }
-        break;
-      case 'remove':
-        stage('Remove Docker Network') {
-          sh "docker network remove aws-${timeInSeconds}"
-        }
-        break;
-    }
+def dockerNetwork(action, timeInSeconds) {
+  switch(action) {
+    case 'create':
+      stage('Create Docker Network') {
+        sh "docker network create aws-${timeInSeconds}"
+      }
+      break;
+    case 'remove':
+      stage('Remove Docker Network') {
+        sh "docker network remove aws-${timeInSeconds}"
+      }
+      break;
   }
 }
 
@@ -123,27 +132,13 @@ node {
     checkout scm
   }
 
-  curBranch = sh (
-                script: "git branch --show-current",
-                returnStdout: true
-              ).trim()
-  if (curBranch == "develop") {
-    s3bucket = "es-unir-staging-s3-95853-artifacts"
-    doLocal = false
-  } else if (curBranch == "master") {
-    s3bucket = "es-unir-staging-s3-95853-artifacts"
-    doLocal = false
-  } else {
-    doLocal = true
-  }
-
   stage('Pull docker images') {
     sh "docker image pull 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
     sh "docker image pull amazon/dynamodb-local"
   }
 
   try {
-    dockerNetwork('create', timeInSeconds, doLocal)
+    dockerNetwork('create', timeInSeconds)
     try {
       pythonBuildEnv('create', timeInSeconds, doLocal)
       try {
@@ -167,7 +162,7 @@ node {
     } catch(be) {
       printFailure(be)
     } finally {
-      dockerNetwork('remove', timeInSeconds, doLocal)
+      dockerNetwork('remove', timeInSeconds)
     }
   } catch(dn) {
     printFailure(dn)
