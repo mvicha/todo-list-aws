@@ -35,3 +35,7 @@ output "ecr_url" {
 output "ecr_dynamo_url" {
   value = aws_ecr_repository.ecr_dynamo.repository_url
 }
+
+output "ecr_python_env_url" {
+  value = aws_ecr_repository.ecr_python_env.repository_url
+}

@@ -2,6 +2,7 @@ import boto3
 # from botocore.exceptions import ClientError
 import time
 import uuid
+import json
 
 # import json
 # import logging
@@ -165,9 +166,44 @@ class handler(object):
         return result
 
     def delete_todo(self, id):
-        table = self.dynamodb.Table(self.tableName)
-        table.delete_item(
-            Key={
-                'id': id
+        try:
+            table = self.dynamodb.Table(self.tableName)
+        except Exception as e:
+            result = {
+                'Items': json.dumps({
+                    'errorCode': 0x01,
+                    'errorMsg': 'Unable to select table',
+                    'errorException': e
+                })
             }
-        )
+            httpCode = 500
+
+        if httpCode != 500:
+            try:
+                table.delete_item(
+                    Key={
+                        'id': id
+                    }
+                )
+                httpCode = 200
+                result = {
+                    'Items': json.dumps({
+                        'errorCode': 0x00,
+                        'errorMsg': 'Todo item deleted successfully'
+                    })
+                }
+            except Exception as e:
+                httpCode = 500
+                result = {
+                    'Items': json.dumps({
+                        'errorCode': 0x15,
+                        'errorMsg': 'Unable to delete todo item',
+                        'errorException': e
+                    })
+                }
+
+        response = {
+            "statusCode": httpCode,
+            "body": json.dumps(result)
+        }
+        return response

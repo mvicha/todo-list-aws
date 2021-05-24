@@ -20,3 +20,8 @@ variable "ecr_dynamo_name" {
   description = "Nombre del ECR que crearemos para guardar las imágenes Docker de Dynamo con entorno de Python y AWS para Jenkins"
   default     = "mvicha-ecr-dynamo"
 }
+
+variable "ecr_python_env_name" {
+  description = "Nombre del ECR que crearemos para guardar las imágenes Docker de un entorno de Python y AWS para Jenkins"
+  default     = "mvicha-ecr-python-env"
+}
