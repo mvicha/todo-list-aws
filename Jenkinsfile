@@ -10,12 +10,15 @@ if (timeInSeconds < 0) {
 
 if (GIT_BRANCH == "origin/develop") {
   s3bucket = "es-unir-staging-s3-95853-artifacts"
-  doLocal = true
+  doLocal = false
+  doTests = true
 } else if (GIT_BRANCH == "origin/master") {
   s3bucket = "es-unir-staging-s3-95853-artifacts"
   doLocal = false
+  doTests = false
 } else {
   doLocal = true
+  doTests = true
 }
 
 
@@ -62,8 +65,8 @@ def pythonBuildEnv(action, timeInSeconds, doLocal) {
   }
 }
 
-def localDynamo(action, timeInSeconds, doLocal) {
-  if (doLocal) {
+def localDynamo(action, timeInSeconds, doTests) {
+  if (doTests) {
     switch(action) {
       case 'create':
         stage('Create local dynamodb') {
@@ -82,14 +85,14 @@ def localDynamo(action, timeInSeconds, doLocal) {
 def testApp(timeInSeconds, doLocal, testCase) {
   switch(testCase) {
     case 'static':
-      if (doLocal) {
+      if (doTests) {
         stage('Run tests 1/2 - Static tests') {
           sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_tests.sh"
         }
       }
       break;
     case 'unittest':
-      if (doLocal) {
+      if (doTests) {
         stage('Run tests 2/2 - unittest') {
           sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_unittest.sh"
         }
@@ -144,9 +147,9 @@ node {
   try {
     dockerNetwork('create', timeInSeconds)
     try {
-      pythonBuildEnv('create', timeInSeconds, doLocal)
+      localDynamo('create', timeInSeconds, doLocal)
       try {
-        localDynamo('create', timeInSeconds, doLocal)
+        pythonBuildEnv('create', timeInSeconds, doLocal)
         try {
           testApp(timeInSeconds, doLocal, 'static')
           testApp(timeInSeconds, doLocal, 'unittest')
@@ -156,12 +159,12 @@ node {
         } catch(r) {
           printFailure(r)
         } finally {
-          localDynamo('remove', timeInSeconds, doLocal)
+          pythonBuildEnv('remove', timeInSeconds, doLocal)
         }
       } catch(ld) {
         printFailure(ld)
       } finally {
-        pythonBuildEnv('remove', timeInSeconds, doLocal)
+        localDynamo('remove', timeInSeconds, doTests)
       }
     } catch(be) {
       printFailure(be)

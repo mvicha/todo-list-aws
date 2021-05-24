@@ -2,7 +2,7 @@
 
 export PATH=${HOME}/.local/bin:${PATH}
 
-if [ "${1}" == "true" ]; then
+if [[ "${1}" == "true" ]]; then
     export ENDPOINT_URL=$(aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiUrl`].OutputValue' --output text)
 else
     export ENDPOINT_URL="http://dynamodb:8080"
