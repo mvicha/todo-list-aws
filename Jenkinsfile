@@ -51,9 +51,9 @@ def pythonBuildEnv(action, timeInSeconds, doLocal) {
     case 'create':
       stage('Create Build Environment') {
         if (doLocal) {
-          sh "docker container run --name python-env-${timeInSeconds} --link dynamo-${timeInSeconds}:dynamodb --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:/opt/todo-list-aws 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
+          sh "docker container run --name python-env-${timeInSeconds} --link dynamo-${timeInSeconds}:dynamodb --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
         } else {
-          sh "docker container run --name python-env-${timeInSeconds} --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:/opt/todo-list-aws 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
+          sh "docker container run --name python-env-${timeInSeconds} --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
         }
       }
       break;
@@ -71,6 +71,7 @@ def localDynamo(action, timeInSeconds, doTests) {
       case 'create':
         stage('Create local dynamodb') {
           sh "docker container run -d --network aws-${timeInSeconds} --name dynamo-${timeInSeconds} --rm amazon/dynamodb-local"
+          sh "docker container run --rm --network aws-${timeInSeconds} --link dynamo-${timeInSeconds}:dynamodb -v ~/.aws:/root/.aws -v ${PWD}/table.json:/tmp/table.json amazon/aws-cli dynamodb create-table --cli-input-json file:///tmp/table.json --endpoint-url http://dynamodb:8000"
         }
         break;
       case 'remove':
@@ -103,16 +104,20 @@ def testApp(timeInSeconds, doLocal, testCase) {
         if (doLocal) {
           sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh true"
         } else {
-          sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh false"
+          sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh"
         }
       }
   }
 }
 
-def startLocalApi(timeInSeconds, doLocal) {
-  if (doLocal) {
+def linkDirectory(source, destination) {
+  sh "docker container exec -u root python-env-${timeInSeconds} ln -sf ${source} ${destination}"
+}
+
+def startLocalApi(timeInSeconds, doTests) {
+  if (doTests) {
     stage("Start sam local-api") {
-      sh "docker container exec -d python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --port 8080 --debug --docker-network aws-${timeInSeconds}"
+      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api -t /opt/todo-list-aws/template.yaml --region us-east-1 --port 8080 --debug --docker-network aws-${timeInSeconds}"
     }
   }
 }
@@ -151,9 +156,10 @@ node {
       try {
         pythonBuildEnv('create', timeInSeconds, doLocal)
         try {
+          linkDirectory(WORKSPACE, "/opt/todo-list-aws")
           testApp(timeInSeconds, doLocal, 'static')
           testApp(timeInSeconds, doLocal, 'unittest')
-          startLocalApi(timeInSeconds, doLocal)
+          startLocalApi(timeInSeconds, doTests)
           deployApp(timeInSeconds, doLocal)
           testApp(timeInSeconds, doLocal, 'integration')
         } catch(r) {

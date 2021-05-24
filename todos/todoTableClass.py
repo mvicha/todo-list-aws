@@ -15,6 +15,7 @@ from urllib3 import request
 
 class handler(object):
     def __init__(self, table, dynamodb=None, create=None):
+        print(f"table: {table}")
         self.tableName = table
         validate_todo_table = False
         if not dynamodb:

@@ -6,11 +6,13 @@ import boto3
 from todoTableClass import handler as todoTableClass
 
 dynamodb = None
+print(f"We are here: {os.environ['DYNAMODB_TABLE']}")
 if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
     dynamodb = boto3.resource('dynamodb')
 
 
 def create(event, context):
+    print(f"We are here again: {os.environ['DYNAMODB_TABLE']}")
     data = json.loads(event['body'])
     if 'text' not in data:
         logging.error("Validation Failed")
