@@ -120,6 +120,8 @@ def startLocalApi(timeInSeconds, doTests) {
     stage("Start sam local-api") {
       sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} sed -i 's/timeInSeconds/${timeInSeconds}/g' todos/todoTableClass.py"
       sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
+      // Wait 30 seconds for api to start
+      sh "sleep 30"
     }
   }
 }
@@ -159,29 +161,29 @@ node {
         pythonBuildEnv('create', timeInSeconds, doLocal)
         try {
           linkDirectory(timeInSeconds, WORKSPACE, "/opt/todo-list-aws")
-          //testApp(timeInSeconds, doLocal, 'static')
-          //testApp(timeInSeconds, doLocal, 'unittest')
+          testApp(timeInSeconds, doLocal, 'static')
+          testApp(timeInSeconds, doLocal, 'unittest')
           startLocalApi(timeInSeconds, doTests)
           deployApp(timeInSeconds, doLocal)
           testApp(timeInSeconds, doLocal, 'integration')
         } catch(r) {
           printFailure(r)
         } finally {
-          //pythonBuildEnv('remove', timeInSeconds, doLocal)
+          pythonBuildEnv('remove', timeInSeconds, doLocal)
         }
       } catch(ld) {
         printFailure(ld)
       } finally {
-        //localDynamo('remove', timeInSeconds, doTests)
+        localDynamo('remove', timeInSeconds, doTests)
       }
     } catch(be) {
       printFailure(be)
     } finally {
-      //dockerNetwork('remove', timeInSeconds)
+      dockerNetwork('remove', timeInSeconds)
     }
   } catch(dn) {
     printFailure(dn)
   }
 
-  //cleanUp(false)
+  cleanUp(false)
 }
