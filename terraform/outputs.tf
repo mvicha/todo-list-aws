@@ -2,6 +2,10 @@ output "key_pair" {
   value = tls_private_key.this.private_key_pem
 }
 
+output "s3_bucket_development" {
+  value = aws_s3_bucket.s3_bucket_development.id
+}
+
 output "s3_bucket_production" {
   value = aws_s3_bucket.s3_bucket_production.id
 }

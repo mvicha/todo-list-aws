@@ -9,6 +9,20 @@ Globals:
   Function:
     Timeout: 3
 
+Parameters:
+  EnvironmentType:
+    Type: String
+    AllowedValues:
+      - 'local'
+      - 'dev'
+      - 'stg'
+      - 'prod'
+
+Conditions:
+  deployDynamo:
+    #!Not [!Or [!Equals [!Ref EnvironmentType, local], !Equals [!Ref EnvironmentType, dev]]]
+    !Not [!Equals [!Ref EnvironmentType, local]]
+
 Resources:
   todoListFcnList:
     Type: AWS::Serverless::Function
@@ -137,24 +151,13 @@ Resources:
           Properties:
             Path: /todos/{id}
             Method: delete
-  # todoListFcnTest:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     CodeUri: todos/
-  #     Handler: test_functions.functions
-  #     Environment:
-  #       Variables:
-  #         stgname: "staging"
-  #         svcname: "useless"
-  #     Events:
-  #       Path: /todos/runfulltesting
-  #       Method: get
-  #       Private: true
+
   TodoDynamoDbTable:
+    Condition: deployDynamo
     Type: AWS::DynamoDB::Table
-    TableName: todoTable
     DeletionPolicy: Retain
     Properties:
+      # TableName: !Sub "todoTable-${EnvironmentType}"
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -192,6 +195,7 @@ Outputs:
   todoListResourceFcnDelete:
     Description: "Delete Lambda Function ARN"
     Value: !GetAtt todoListFcnDelete.Arn
+
   #todoListServerLessReadOnlyIamRole:
   #  Description: "Implicit IAM Role created for todoListFcnList function"
   #  Value: !GetAtt todoListFcnListRole.Arn

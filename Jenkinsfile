@@ -9,18 +9,23 @@ if (timeInSeconds < 0) {
 }
 
 if (GIT_BRANCH == "origin/develop") {
+  s3bucket = "es-unir-development-s3-95853-artifacts"
+  doLocal = false
+  doTests = true
+} else if (GIT_BRANCH == "origin/staging") {
   s3bucket = "es-unir-staging-s3-95853-artifacts"
   doLocal = false
   doTests = true
   stackName = "dev"
 } else if (GIT_BRANCH == "origin/master") {
-  s3bucket = "es-unir-staging-s3-95853-artifacts"
+  s3bucket = "es-unir-production-s3-95853-artifacts"
   doLocal = false
   doTests = false
   stackName = "prod"
 } else {
   doLocal = true
   doTests = true
+  stackName = "local"
 }
 
 
@@ -126,10 +131,26 @@ def startLocalApi(timeInSeconds, doTests) {
   }
 }
 
-def deployApp(timeInSeconds, doLocal) {
+def buildApp(timeInSeconds, doLocal, stackName) {
+  if (!doLocal) {
+    stage('Build application') {
+      sh "docker container exec -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam build --region us-east-1 --debug --docker-network aws-${timeInSeconds} --parameter-overrides EnvironmentType=${stackName}"
+    }
+  }
+}
+
+def validateApp(timeInSeconds, doLocal) {
+  if (!doLocal) {
+    stage('Validate cloudformation template') {
+      sh "docker container exec -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/aws cloudformation validate-template --template-body file://.aws-sam/build/template.yaml"
+    }
+  }
+}
+
+def deployApp(timeInSeconds, doLocal, stackName) {
   if (!doLocal) {
     stage('Deploy application') {
-      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${stackName} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_IAM"
+      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${stackName} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${stackName}"
     }
   }
 }
@@ -164,7 +185,9 @@ node {
           testApp(timeInSeconds, doLocal, 'static')
           testApp(timeInSeconds, doLocal, 'unittest')
           startLocalApi(timeInSeconds, doTests)
-          deployApp(timeInSeconds, doLocal)
+          buildApp(timeInSeconds, doLocal, stackName)
+          validateApp(timeInSeconds, doLocal)
+          deployApp(timeInSeconds, doLocal, stackName)
           testApp(timeInSeconds, doLocal, 'integration')
         } catch(r) {
           printFailure(r)
