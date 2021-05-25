@@ -24,7 +24,7 @@ class handler(object):
             # In this case dynamodb is the name of the docker container
             # when all the containers are in the same network.
             dynamodb = boto3.resource(
-                       'dynamodb', endpoint_url='http://dynamo-timeInSeconds:8000',
+                       'dynamodb', endpoint_url='http://dynamodb-timeInSeconds:8000',
                        region_name='us-east-1')
             if not create:
                 validate_todo_table = True
@@ -38,7 +38,7 @@ class handler(object):
     def validate_todo_table(self):
         try:
             client = boto3.client(
-                     'dynamodb', endpoint_url='http://dynamo-timeInSeconds:8000',
+                     'dynamodb', endpoint_url='http://dynamodb-timeInSeconds:8000',
                      region_name='us-east-1')
         except Exception as e:
             print(f"Exception connecting: {e}")
@@ -53,8 +53,6 @@ class handler(object):
             try:
                 localIPAddress = "python-env-timeInSeconds"
                 http = urllib3.PoolManager()
-                r = http.request('GET', localIPAddress)
-                print(localIPAddress)
                 createTableURL = "http://"
                 createTableURL += f"{localIPAddress}"
                 createTableURL += ":8080/todos/createTable/"

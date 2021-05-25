@@ -73,8 +73,6 @@ def localDynamo(action, timeInSeconds, doTests) {
       case 'create':
         stage('Create local dynamodb') {
           sh "docker container run -d --network aws-${timeInSeconds} --name dynamodb-${timeInSeconds} --rm amazon/dynamodb-local"
-          sh "sleep 5"
-          sh "docker container run --rm --network aws-${timeInSeconds} --link dynamodb-${timeInSeconds}:dynamodb -v ~/.aws:/root/.aws -v \${PWD}/table.json:/tmp/table.json amazon/aws-cli dynamodb create-table --cli-input-json file:///tmp/table.json --endpoint-url http://dynamodb:8000"
         }
         break;
       case 'remove':
@@ -121,7 +119,7 @@ def startLocalApi(timeInSeconds, doTests) {
   if (doTests) {
     stage("Start sam local-api") {
       sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} sed -i 's/timeInSeconds/${timeInSeconds}/g' todos/todoTableClass.py"
-      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8081 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
+      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
     }
   }
 }
@@ -169,7 +167,7 @@ node {
         } catch(r) {
           printFailure(r)
         } finally {
-          pythonBuildEnv('remove', timeInSeconds, doLocal)
+          //pythonBuildEnv('remove', timeInSeconds, doLocal)
         }
       } catch(ld) {
         printFailure(ld)
