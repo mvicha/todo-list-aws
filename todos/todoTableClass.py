@@ -10,7 +10,8 @@ import json
 # import decimalencoder
 
 # from botocore.vendored import requests
-from urllib3 import request
+#from urllib3 import request
+import urllib3
 
 
 class handler(object):
@@ -18,11 +19,12 @@ class handler(object):
         print(f"table: {table}")
         self.tableName = table
         validate_todo_table = False
+
         if not dynamodb:
             # In this case dynamodb is the name of the docker container
             # when all the containers are in the same network.
             dynamodb = boto3.resource(
-                       'dynamodb', endpoint_url='http://dynamo:8000',
+                       'dynamodb', endpoint_url='http://dynamo-timeInSeconds:8000',
                        region_name='us-east-1')
             if not create:
                 validate_todo_table = True
@@ -34,27 +36,31 @@ class handler(object):
 
     # Function to validate if table exists
     def validate_todo_table(self):
-        client = boto3.client(
-                 'dynamodb', endpoint_url='http://dynamo:8000',
-                 region_name='us-east-1')
+        try:
+            client = boto3.client(
+                     'dynamodb', endpoint_url='http://dynamo-timeInSeconds:8000',
+                     region_name='us-east-1')
+        except Exception as e:
+            print(f"Exception connecting: {e}")
 
         try:
+            print(self.tableName)
             response = client.describe_table(TableName=self.tableName)
 
             return response
         except client.exceptions.ResourceNotFoundException:
             print("Create table")
             try:
-                awsURL = "http://169.254.169.254/latest/meta-data/local-ipv4"
-                localIPAddressURL = awsURL
-                with request.urlopen(localIPAddressURL) as x:
-                    localIPAddress = x.read().decode('utf-8')
+                localIPAddress = "python-env-timeInSeconds"
+                http = urllib3.PoolManager()
+                r = http.request('GET', localIPAddress)
                 print(localIPAddress)
                 createTableURL = "http://"
-                createTableURL += {localIPAddress}
+                createTableURL += f"{localIPAddress}"
                 createTableURL += ":8080/todos/createTable/"
-                response = request.urlopen(createTableURL)
-                return response
+                r = http.request('GET', createTableURL)
+                print(r.data)
+                return r.data.decode('utf-8')
             except Exception as e:
                 print("Exception: {}".format(e))
                 return e

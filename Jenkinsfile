@@ -53,7 +53,7 @@ def pythonBuildEnv(action, timeInSeconds, doLocal) {
     case 'create':
       stage('Create Build Environment') {
         if (doLocal) {
-          sh "docker container run --name python-env-${timeInSeconds} --link dynamo-${timeInSeconds}:dynamodb --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
+          sh "docker container run --name python-env-${timeInSeconds} --link dynamodb-${timeInSeconds}:dynamodb --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
         } else {
           sh "docker container run --name python-env-${timeInSeconds} --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
         }
@@ -72,14 +72,14 @@ def localDynamo(action, timeInSeconds, doTests) {
     switch(action) {
       case 'create':
         stage('Create local dynamodb') {
-          sh "docker container run -d --network aws-${timeInSeconds} --name dynamo-${timeInSeconds} --rm amazon/dynamodb-local"
+          sh "docker container run -d --network aws-${timeInSeconds} --name dynamodb-${timeInSeconds} --rm amazon/dynamodb-local"
           sh "sleep 5"
-          sh "docker container run --rm --network aws-${timeInSeconds} --link dynamo-${timeInSeconds}:dynamodb -v ~/.aws:/root/.aws -v \${PWD}/table.json:/tmp/table.json amazon/aws-cli dynamodb create-table --cli-input-json file:///tmp/table.json --endpoint-url http://dynamodb:8000"
+          sh "docker container run --rm --network aws-${timeInSeconds} --link dynamodb-${timeInSeconds}:dynamodb -v ~/.aws:/root/.aws -v \${PWD}/table.json:/tmp/table.json amazon/aws-cli dynamodb create-table --cli-input-json file:///tmp/table.json --endpoint-url http://dynamodb:8000"
         }
         break;
       case 'remove':
         stage('Remove local dynamodb') {
-          sh "docker container rm -f dynamo-${timeInSeconds}"
+          sh "docker container rm -f dynamodb-${timeInSeconds}"
         }
         break;
     }
@@ -120,7 +120,8 @@ def linkDirectory(timeInSeconds, source, destination) {
 def startLocalApi(timeInSeconds, doTests) {
   if (doTests) {
     stage("Start sam local-api") {
-      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
+      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} sed -i 's/timeInSeconds/${timeInSeconds}/g' todos/todoTableClass.py"
+      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8081 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
     }
   }
 }
@@ -160,8 +161,8 @@ node {
         pythonBuildEnv('create', timeInSeconds, doLocal)
         try {
           linkDirectory(timeInSeconds, WORKSPACE, "/opt/todo-list-aws")
-          testApp(timeInSeconds, doLocal, 'static')
-          testApp(timeInSeconds, doLocal, 'unittest')
+          //testApp(timeInSeconds, doLocal, 'static')
+          //testApp(timeInSeconds, doLocal, 'unittest')
           startLocalApi(timeInSeconds, doTests)
           deployApp(timeInSeconds, doLocal)
           testApp(timeInSeconds, doLocal, 'integration')
@@ -173,16 +174,16 @@ node {
       } catch(ld) {
         printFailure(ld)
       } finally {
-        localDynamo('remove', timeInSeconds, doTests)
+        //localDynamo('remove', timeInSeconds, doTests)
       }
     } catch(be) {
       printFailure(be)
     } finally {
-      dockerNetwork('remove', timeInSeconds)
+      //dockerNetwork('remove', timeInSeconds)
     }
   } catch(dn) {
     printFailure(dn)
   }
 
-  cleanUp(false)
+  //cleanUp(false)
 }
