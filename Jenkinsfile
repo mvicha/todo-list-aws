@@ -1,5 +1,8 @@
 import java.time.*
 
+/*
+  Generamos un valor timeInSeconds para darles un nombre único a los recursos
+*/
 Date now = new Date()
 Integer timeInSeconds = now.getTime()
 if (timeInSeconds < 0) {
@@ -8,6 +11,13 @@ if (timeInSeconds < 0) {
   println("Fixed Time is now: " + timeInSeconds.toString())
 }
 
+/*
+  Definir valores en base al branch:
+    - s3bucket: Bucket que se utiliza para guardar los archivos de SAM
+    - doLocal: Utilizado para validar ejecución en entorno local
+    - doTests: Utilizado para validar realización de pruebas
+    - stackName: Utilizado para darle un nombre al stack de CloudFormation
+*/
 if (GIT_BRANCH == "origin/develop") {
   s3bucket = "es-unir-development-s3-95853-artifacts"
   doLocal = false
@@ -29,6 +39,10 @@ if (GIT_BRANCH == "origin/develop") {
 }
 
 
+/*
+  Esta función limpia el entorno.
+    - debugenv: Utilizado para imprimir información acerca del entorno
+*/
 def cleanUp(debugenv) {
   stage('Clean') {
     deleteDir()
@@ -38,6 +52,11 @@ def cleanUp(debugenv) {
   }
 }
 
+/*
+  Esta función crea/elimina la red en docker
+    - action: create o remove
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+*/
 def dockerNetwork(action, timeInSeconds) {
   switch(action) {
     case 'create':
@@ -53,6 +72,12 @@ def dockerNetwork(action, timeInSeconds) {
   }
 }
 
+/*
+  Esta función crea/elimina el contenedor con el entorno de build
+    - action: create o remove
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+    - doLocal: para saber si estamos trabajando en un entorno local
+*/
 def pythonBuildEnv(action, timeInSeconds, doLocal) {
   switch(action) {
     case 'create':
@@ -72,6 +97,12 @@ def pythonBuildEnv(action, timeInSeconds, doLocal) {
   }
 }
 
+/*
+  Esta función crea/elimina el contenedor de dynamodb
+    - action: create o remove
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+    - doTests: sólo iniciaremos dynamodb si necesitamos hacer tests
+*/
 def localDynamo(action, timeInSeconds, doTests) {
   if (doTests) {
     switch(action) {
@@ -89,7 +120,14 @@ def localDynamo(action, timeInSeconds, doTests) {
   }
 }
 
-def testApp(timeInSeconds, doLocal, testCase) {
+/*
+  Esta función se utiliza para lanzar las distintas pruebas
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+    - doLocal: para saber si estamos trabajando en un entorno local
+    - doTests: sólo lanzaremos las pruebas que así lo requieran
+    - testCase: static, unittest o integration
+*/
+def testApp(timeInSeconds, doLocal, doTests, testCase) {
   switch(testCase) {
     case 'static':
       if (doTests) {
@@ -116,21 +154,38 @@ def testApp(timeInSeconds, doLocal, testCase) {
   }
 }
 
+/*
+  Esta función se utiliza para crear un symlink en el entorno de build para trabajar en /opt/todo-list-aws
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+    - source: Directorio de origen (/var/lib/jenkins/wokspace/...)
+    - destination: Directorio de destino (/opt/todo-list-aws)
+*/
 def linkDirectory(timeInSeconds, source, destination) {
   sh "docker container exec -u root python-env-${timeInSeconds} ln -sf ${source} ${destination}"
 }
 
+/*
+  Esta función se utiliza para iniciar local-api
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+    - doTests: sólo iniciaremos local-api si necesitamos hacer tests
+*/
 def startLocalApi(timeInSeconds, doTests) {
   if (doTests) {
     stage("Start sam local-api") {
       sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} sed -i 's/timeInSeconds/${timeInSeconds}/g' todos/todoTableClass.py"
       sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
-      // Wait 30 seconds for api to start
-      sh "sleep 30"
+      // Wait 10 seconds for api to start
+      sh "sleep 10"
     }
   }
 }
 
+/*
+  Esta función se utiliza para construir la app
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+    - doLocal: para saber si estamos trabajando en un entorno local
+    - stackName: para trabajar sobre un stack de CloudFormation
+*/
 def buildApp(timeInSeconds, doLocal, stackName) {
   if (!doLocal) {
     stage('Build application') {
@@ -139,6 +194,11 @@ def buildApp(timeInSeconds, doLocal, stackName) {
   }
 }
 
+/*
+  Después de construir la app validamos si el template funciona
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+    - doLocal: para saber si estamos trabajando en un entorno local
+*/
 def validateApp(timeInSeconds, doLocal) {
   if (!doLocal) {
     stage('Validate cloudformation template') {
@@ -147,6 +207,12 @@ def validateApp(timeInSeconds, doLocal) {
   }
 }
 
+/*
+  Esta función despliega SAM
+    - timeInSeconds: número que se genera para darle un nombre "único" a los recursos
+    - doLocal: para saber si estamo trabajando en un entorno local
+    - stackName: para trabajar sobre un stack de CloudFormation
+*/
 def deployApp(timeInSeconds, doLocal, stackName) {
   if (!doLocal) {
     stage('Deploy application') {
@@ -155,58 +221,87 @@ def deployApp(timeInSeconds, doLocal, stackName) {
   }
 }
 
+/*
+  Función utilizada para hacer debug de errores
+    - e: string de excepción
+*/
 def printFailure(e) {
   println "Failed because of $e"
 }
 
 
+/*
+  Comienzo del pipeline
+*/
 node {
-
+  // Limpiamos el entorno
   cleanUp(true)
 
+  // Obtenemos la última versión del código desde Git
   stage('Checkout') {
     echo 'Checkout SCM'
     checkout scm
   }
 
+  // Descargamos las imágenes de docker que vamos a utilizar
   stage('Pull docker images') {
     sh "docker image pull 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
     sh "docker image pull amazon/dynamodb-local"
   }
 
   try {
+    // Creamos la red de docker
     dockerNetwork('create', timeInSeconds)
     try {
-      localDynamo('create', timeInSeconds, doLocal)
+      // Iniciamos dynamodb-local
+      localDynamo('create', timeInSeconds, doTests)
       try {
+        // Iniciamos nuestro entorno de build
         pythonBuildEnv('create', timeInSeconds, doLocal)
         try {
+          // Creamos symlink del directorio
           linkDirectory(timeInSeconds, WORKSPACE, "/opt/todo-list-aws")
-          testApp(timeInSeconds, doLocal, 'static')
-          testApp(timeInSeconds, doLocal, 'unittest')
+
+          // Testeamos el código y realizmos unittests
+          testApp(timeInSeconds, doLocal, doTests, 'static')
+          testApp(timeInSeconds, doLocal, doTests, 'unittest')
+
+          // Iniciamos local-api
           startLocalApi(timeInSeconds, doTests)
+
+          // Construimos, validamos y desplegamos la app
           buildApp(timeInSeconds, doLocal, stackName)
           validateApp(timeInSeconds, doLocal)
           deployApp(timeInSeconds, doLocal, stackName)
-          testApp(timeInSeconds, doLocal, 'integration')
+
+          // Realizamos integration test
+          testApp(timeInSeconds, doLocal, doTests, 'integration')
         } catch(r) {
+          // Si Algo falló mostramos un error
           printFailure(r)
         } finally {
+          // Siempre eliminamos el entorno de build
           pythonBuildEnv('remove', timeInSeconds, doLocal)
         }
       } catch(ld) {
+        // Si no pudimos iniciar el entorno de build mostramos error
         printFailure(ld)
       } finally {
+        // Siempre eliminamos dynamodb-local
         localDynamo('remove', timeInSeconds, doTests)
       }
     } catch(be) {
+      // Si no pudimos iniciar dynamodb-local mostramos error
       printFailure(be)
     } finally {
+      // Siempre eliminamos la red de docker
       dockerNetwork('remove', timeInSeconds)
     }
   } catch(dn) {
+    // Si no pudimos iniciar la red de docker mostramos un error
     printFailure(dn)
   }
 
+  // Limpiamos el entorno
   cleanUp(false)
 }
