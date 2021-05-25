@@ -12,10 +12,12 @@ if (GIT_BRANCH == "origin/develop") {
   s3bucket = "es-unir-staging-s3-95853-artifacts"
   doLocal = false
   doTests = true
+  stackName = "dev"
 } else if (GIT_BRANCH == "origin/master") {
   s3bucket = "es-unir-staging-s3-95853-artifacts"
   doLocal = false
   doTests = false
+  stackName = "prod"
 } else {
   doLocal = true
   doTests = true
@@ -71,7 +73,8 @@ def localDynamo(action, timeInSeconds, doTests) {
       case 'create':
         stage('Create local dynamodb') {
           sh "docker container run -d --network aws-${timeInSeconds} --name dynamo-${timeInSeconds} --rm amazon/dynamodb-local"
-          sh "docker container run --rm --network aws-${timeInSeconds} --link dynamo-${timeInSeconds}:dynamodb -v ~/.aws:/root/.aws -v ${PWD}/table.json:/tmp/table.json amazon/aws-cli dynamodb create-table --cli-input-json file:///tmp/table.json --endpoint-url http://dynamodb:8000"
+          sh "sleep 5"
+          sh "docker container run --rm --network aws-${timeInSeconds} --link dynamo-${timeInSeconds}:dynamodb -v ~/.aws:/root/.aws -v \${PWD}/table.json:/tmp/table.json amazon/aws-cli dynamodb create-table --cli-input-json file:///tmp/table.json --endpoint-url http://dynamodb:8000"
         }
         break;
       case 'remove':
@@ -102,22 +105,22 @@ def testApp(timeInSeconds, doLocal, testCase) {
     case 'integration':
       stage('Run integration tests') {
         if (doLocal) {
-          sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh true"
-        } else {
           sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh"
+        } else {
+          sh "docker container exec python-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh true"
         }
       }
   }
 }
 
-def linkDirectory(source, destination) {
+def linkDirectory(timeInSeconds, source, destination) {
   sh "docker container exec -u root python-env-${timeInSeconds} ln -sf ${source} ${destination}"
 }
 
 def startLocalApi(timeInSeconds, doTests) {
   if (doTests) {
     stage("Start sam local-api") {
-      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api -t /opt/todo-list-aws/template.yaml --region us-east-1 --port 8080 --debug --docker-network aws-${timeInSeconds}"
+      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
     }
   }
 }
@@ -125,7 +128,7 @@ def startLocalApi(timeInSeconds, doTests) {
 def deployApp(timeInSeconds, doLocal) {
   if (!doLocal) {
     stage('Deploy application') {
-      sh "docker container exec python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy -t /opt/todo-list-aws/template.yaml --debug --force-upload --stack-name todo-list-aws-staging --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_IAM"
+      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${stackName} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_IAM"
     }
   }
 }
@@ -156,7 +159,7 @@ node {
       try {
         pythonBuildEnv('create', timeInSeconds, doLocal)
         try {
-          linkDirectory(WORKSPACE, "/opt/todo-list-aws")
+          linkDirectory(timeInSeconds, WORKSPACE, "/opt/todo-list-aws")
           testApp(timeInSeconds, doLocal, 'static')
           testApp(timeInSeconds, doLocal, 'unittest')
           startLocalApi(timeInSeconds, doTests)
