@@ -110,6 +110,8 @@ def localDynamo(action, timeInSeconds, doTests) {
       stage('Create local dynamodb') {
         if (doTests) {
           sh "docker container run -d --network aws-${timeInSeconds} --name dynamodb-${timeInSeconds} --rm amazon/dynamodb-local"
+        } else {
+          echo "Este entorno no ejecutará tests, por lo que no es necesario iniciar DynamoDB-Local"
         }
       }
       break;
@@ -117,6 +119,8 @@ def localDynamo(action, timeInSeconds, doTests) {
       stage('Remove local dynamodb') {
         if (doTests) {
           sh "docker container rm -f dynamodb-${timeInSeconds}"
+        } else {
+          echo "Este entorno no ejecutó tests, por lo que no es necesario detener DynamoDB-Local (No iniciado)"
         }
       }
       break;
@@ -136,6 +140,8 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
       stage('Run tests 1/2 - Static tests') {
         if (doTests) {
           sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/test/run_tests.sh"
+        } else {
+          echo "Este entorno no ejecutará tests"
         }
       }
       break;
@@ -143,6 +149,8 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
       stage('Run tests 2/2 - unittest') {
         if (doTests) {
           sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/test/run_unittest.sh"
+        } else {
+          echo "Este entorno no ejecutará tests"
         }
       }
       break;
@@ -179,6 +187,8 @@ def startLocalApi(timeInSeconds, doTests) {
       sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
       // Wait 10 seconds for api to start
       sleep 10
+    } else {
+      echo "Este entorno no ejecutará tests, por lo que no es necesario iniciar local-api"
     }
   }
 }
@@ -193,6 +203,8 @@ def buildApp(timeInSeconds, doLocal, stackName) {
   stage('Build application') {
     if (!doLocal) {
       sh "docker container exec -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam build --region us-east-1 --debug --docker-network aws-${timeInSeconds} --parameter-overrides EnvironmentType=${stackName}"
+    } else {
+      echo "No construiremos la app en un entorno local"
     }
   }
 }
@@ -206,6 +218,8 @@ def validateApp(timeInSeconds, doLocal) {
   stage('Validate cloudformation template') {
     if (!doLocal) {
       sh "docker container exec -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/aws cloudformation validate-template --template-body file://.aws-sam/build/template.yaml"
+    } else {
+      echo "No hemos construido una app para validar en un entorno local"
     }
   }
 }
@@ -220,6 +234,8 @@ def deployApp(timeInSeconds, doLocal, stackName) {
   stage('Deploy application') {
     if (!doLocal) {
       sh "docker container exec -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${stackName} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${stackName}"
+    } else {
+      echo "No hemos construído ni validado la app en un entorno local para desplegar"
     }
   }
 }
