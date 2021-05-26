@@ -11,6 +11,16 @@ if (timeInSeconds < 0) {
   println("Fixed Time is now: " + timeInSeconds.toString())
 }
 
+
+/*
+  Seteamos la variable GIT_BRANCH en caso de que no exista
+*/
+if (!env.GIT_BRANCH) {
+    echo "NULL VALUE FOR GIT_BRANCH"
+    GIT_BRANCH = scm.branches[0].name
+}
+
+
 /*
   Definir valores en base al branch:
     - s3bucket: Bucket que se utiliza para guardar los archivos de SAM
