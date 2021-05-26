@@ -12,19 +12,30 @@ if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
 
 
 def create(event, context):
-    print(f"We are here again: {os.environ['DYNAMODB_TABLE']}")
+    httpCode = 500
     data = json.loads(event['body'])
     if 'text' not in data:
         logging.error("Validation Failed")
-        raise Exception("Couldn't create the todo item.")
-
-    tdCreate = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
-                              dynamodb=dynamodb)
-    item = tdCreate.put_todo(data['text'])
+        item = {
+            'errorCode': 0x02,
+            'errorMsg': 'No text provided'
+        }
+    else:
+        if data['text']:
+            tdCreate = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
+                                      dynamodb=dynamodb)
+            item = tdCreate.put_todo(data['text'])
+            httpCode = 200
+        else:
+            item = {
+                'errorCode': 0x03,
+                'errorMsg': 'Provided text is an empty string',
+                'message': 'Error'
+            }
 
     # create a response
     response = {
-        "statusCode": 200,
+        "statusCode": httpCode,
         "body": json.dumps(item)
     }
 

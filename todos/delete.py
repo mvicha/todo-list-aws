@@ -11,11 +11,15 @@ if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
 def delete(event, context):
     tdDelete = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
                               dynamodb=dynamodb)
-    tdDelete.delete_todo(event['pathParameters']['id'])
+
+    item = tdDelete.get_todo(event['pathParameters']['id'])
+
+    if not item:
+        item = {
+            "statusCode": 500,
+        }
+    else:
+        item = tdDelete.delete_todo(event['pathParameters']['id'])
 
     # create a response
-    response = {
-        "statusCode": 200
-    }
-
-    return response
+    return item

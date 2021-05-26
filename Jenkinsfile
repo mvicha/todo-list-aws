@@ -139,7 +139,7 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
     case 'static':
       stage('Run tests 1/2 - Static tests') {
         if (doTests) {
-          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/test/run_tests.sh"
+          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_tests.sh"
         } else {
           echo "Este entorno no ejecutará tests"
         }
@@ -148,7 +148,7 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
     case 'unittest':
       stage('Run tests 2/2 - unittest') {
         if (doTests) {
-          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/test/run_unittest.sh"
+          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_unittest.sh"
         } else {
           echo "Este entorno no ejecutará tests"
         }
@@ -157,9 +157,9 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
     case 'integration':
       stage('Run integration tests') {
         if (doLocal) {
-          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh ${stackName}"
+          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
         } else {
-          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/test/run_final.sh ${stackName}"
+          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
         }
       }
   }

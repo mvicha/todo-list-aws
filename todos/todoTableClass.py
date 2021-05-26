@@ -127,7 +127,10 @@ class handler(object):
             }
         )
 
-        return result['Item']
+        if 'Item' in result:
+            return result['Item']
+        else:
+            return None
 
     def translate_todo(self, text, target_language,
                        source_language='auto'):
@@ -164,8 +167,10 @@ class handler(object):
         return result
 
     def delete_todo(self, id):
+        httpCode = 500
         try:
             table = self.dynamodb.Table(self.tableName)
+            httpCode = 200
         except Exception as e:
             result = {
                 'Items': json.dumps({

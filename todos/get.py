@@ -12,13 +12,22 @@ if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
 
 
 def get(event, context):
+    httpCode = 200
     tdGet = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
                            dynamodb=dynamodb)
     item = tdGet.get_todo(event['pathParameters']['id'])
 
+    if not item:
+        httpCode = 500
+        item = {
+            'errorCode': 0x04,
+            'errorMsg': 'Item not found',
+            'message': 'Error'
+        }
+
     # create a response
     response = {
-        "statusCode": 200,
+        "statusCode": httpCode,
         "body": json.dumps(item, cls=decimalencoder.DecimalEncoder)
     }
 

@@ -12,18 +12,27 @@ if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
 
 
 def translate(event, context):
+    httpCode = 200
     tdTranslate = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
                                  dynamodb=dynamodb)
     item = tdTranslate.get_todo(event['pathParameters']['id'])
 
-    # Automatically detect source language
-    source_language = 'auto'
-
-    tl = event['pathParameters']['target_language']
-    result_translate = tdTranslate.translate_todo(
-                       text=item['text'],
-                       source_language=source_language,
-                       target_language=tl)
+    if not item:
+        httpCode = 500
+        result_translate = {
+            'errorCode': 0x04,
+            'errorMsg': 'Item not found',
+            'message': 'Error'
+        }
+    else:
+        # Automatically detect source language
+        source_language = 'auto'
+    
+        tl = event['pathParameters']['target_language']
+        result_translate = tdTranslate.translate_todo(
+                           text=item['text'],
+                           source_language=source_language,
+                           target_language=tl)
     # create a response
     response = {
         "statusCode": 200,

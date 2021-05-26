@@ -9,5 +9,4 @@ else
 fi
 
 echo 'Run final testing'
-cd /opt/todo-list-aws/test/unit
-pytest test_create.py -vvv
+pytest tests/integration -vvv
