@@ -27,7 +27,7 @@ def translate(event, context):
     else:
         # Automatically detect source language
         source_language = 'auto'
-    
+
         tl = event['pathParameters']['target_language']
         result_translate = tdTranslate.translate_todo(
                            text=item['text'],
@@ -35,7 +35,7 @@ def translate(event, context):
                            target_language=tl)
     # create a response
     response = {
-        "statusCode": 200,
+        "statusCode": httpCode,
         "body": json.dumps(result_translate, cls=decimalencoder.DecimalEncoder)
     }
 

@@ -36,9 +36,9 @@ def update(event, context):
             }
         else:
             tdUpdate = todoTableClass(table=os.environ['DYNAMODB_TABLE'],
-                                          dynamodb=dynamodb)
+                                      dynamodb=dynamodb)
             item = tdUpdate.get_todo(event['pathParameters']['id'])
-        
+
             if not item:
                 httpCode = 500
                 returnItem = {

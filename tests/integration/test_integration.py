@@ -59,7 +59,7 @@ def test_create(context_id, todo_text, todo_expected_code, todo_expected_text):
     (500, None)
 ])
 def test_create_error(todo_expected_code, creation_text):
-    create_text = { "text": creation_text }
+    create_text = {"text": creation_text}
 
     var_test_create = remoteTableClass().launchEvent(
         os.environ["ENDPOINT_URL"], 'create', json.dumps(create_text))
@@ -152,11 +152,17 @@ def test_translate(context_id, target_language, todo_expected_text):
     assert text_return == todo_expected_text
 
 
-@pytest.mark.parametrize("context_id, target_language, todo_expected_text, todo_expected_code", [
-    (None, 'en', 'This is the first text', 500),
-    (0, 'en', 'This is a wrong text', 200)
-])
-def test_translate_error(context_id, target_language, todo_expected_text, todo_expected_code):
+@pytest.mark.parametrize(
+    "context_id, target_language, \
+    todo_expected_text, todo_expected_code", [
+        (None, 'en',
+            'This is the first text', 500),
+        (0, 'en',
+            'This is a wrong text', 200)
+    ])
+def test_translate_error(
+    context_id, target_language,
+        todo_expected_text, todo_expected_code):
     todo_id = context_class.getItem(context_id)
     var_test_translate = remoteTableClass().launchEvent(
         os.environ["ENDPOINT_URL"] +
@@ -171,13 +177,13 @@ def test_translate_error(context_id, target_language, todo_expected_text, todo_e
         text_return = json.loads(var_test_translate['body'])
         if 'Items' in text_return:
             text_return = json.loads(text_return['Items'])
-    
+
         if 'errorMsg' in text_return:
             text_return = text_return['errorMsg']
-    
+
         if 'TranslatedText' in text_return:
             text_return = text_return['TranslatedText']
-    
+
         assert text_return != todo_expected_text
 
 
