@@ -157,9 +157,9 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
     case 'integration':
       stage('Run integration tests') {
         if (doLocal) {
-          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
+          sh "docker container exec -w \${PWD} -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
         } else {
-          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
+          sh "docker container exec -w \${PWD} -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
         }
       }
   }
