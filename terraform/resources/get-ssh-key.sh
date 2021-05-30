@@ -1,6 +1,10 @@
 #! /bin/bash
-echo "-----BEGIN RSA PRIVATE KEY-----" > resources/key.pem
-cat key_pem | tr " " "\n" | awk '{print $1}' | tail -n +5 | head -n -4 >> resources/key.pem
-echo "-----END RSA PRIVATE KEY-----" >> resources/key.pem
-chmod 700 resources/key.pem
-rm key_pem
+
+user=${1}
+mkdir -p resources/${user}
+
+echo "-----BEGIN RSA PRIVATE KEY-----" > resources/${user}/key.pem
+cat ${user}_key_pem | tr " " "\n" | awk '{print $1}' | tail -n +5 | egrep -v "^(-----END|RSA|PRIVATE|KEY-----)$" >> resources/${user}/key.pem
+echo "-----END RSA PRIVATE KEY-----" >> resources/${user}/key.pem
+chmod 700 resources/${user}/key.pem
+rm ${user}_key_pem

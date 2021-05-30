@@ -11,17 +11,22 @@ variable "instance_type" {
   default     = "t2.small"
 }
 
-variable "ecr_name" {
-  description = "Nombre del ECR que crearemos para guardar las imágenes de Docker para Jenkins"
-  default     = "mvicha-ecr-jenkins"
-}
-
-variable "ecr_dynamo_name" {
-  description = "Nombre del ECR que crearemos para guardar las imágenes Docker de Dynamo con entorno de Python y AWS para Jenkins"
-  default     = "mvicha-ecr-dynamo"
-}
-
 variable "ecr_python_env_name" {
   description = "Nombre del ECR que crearemos para guardar las imágenes Docker de un entorno de Python y AWS para Jenkins"
-  default     = "mvicha-ecr-python-env"
+  default     = "mvicha-ecr-python-env-tf"
+}
+
+variable "codecommit_python_env" {
+  description = "Nombre del repositorio para guardar el entorno de desarrollo"
+  default     = "python-env-tf"
+}
+
+variable "codecommit_todo_list" {
+  description = "Nombre del repositorio para guardar los sources de la app"
+  default     = "todo-list-aws-tf"
+}
+
+variable "repo_unir_credentials" {
+  description = "Repositorio que contiene el job de unir"
+  default     = ""
 }
