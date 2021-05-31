@@ -42,6 +42,7 @@ resource "aws_instance" "jenkins" {
     sudo -u jenkins sed -i 's@codecommit_todo_list_repo@${aws_codecommit_repository.todo_list.clone_url_ssh}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
     sudo -u jenkins sed -i 's@dkr_python_env_url@${aws_ecr_repository.ecr_python_env.repository_url}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
     sudo -u jenkins sed -i 's@staging_bucket_name@${aws_s3_bucket.s3_bucket_staging.id}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
+    sudo -u jenkins sed -i 's@production_bucket_name@${aws_s3_bucket.s3_bucket_production.id}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
     sudo -u jenkins mv /tmp/TODO-LIST/PIPELINE-FULL-STAGING /var/lib/jenkins/jobs/PIPELINE-FULL-STAGING
 
     if [[ -d "/var/lib/jenkins/jobs/PIPELINE-FULL-PRODUCTION" ]]; then
@@ -50,7 +51,8 @@ resource "aws_instance" "jenkins" {
     fi
     sudo -u jenkins sed -i 's@codecommit_todo_list_repo@${aws_codecommit_repository.todo_list.clone_url_ssh}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
     sudo -u jenkins sed -i 's@dkr_python_env_url@${aws_ecr_repository.ecr_python_env.repository_url}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
-    sudo -u jenkins sed -i 's@production_bucket_name@$aws_s3_bucket.s3_bucket_production.id}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
+    sudo -u jenkins sed -i 's@staging_bucket_name@${aws_s3_bucket.s3_bucket_staging.id}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
+    sudo -u jenkins sed -i 's@production_bucket_name@${aws_s3_bucket.s3_bucket_production.id}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
     sudo -u jenkins mv /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION /var/lib/jenkins/jobs/PIPELINE-FULL-PRODUCTION
 
     if [[ -d "/var/lib/jenkins/jobs/PIPELINE-FULL-CD" ]]; then
@@ -59,7 +61,6 @@ resource "aws_instance" "jenkins" {
     fi
     sudo -u jenkins sed -i 's@codecommit_todo_list_repo@${aws_codecommit_repository.todo_list.clone_url_ssh}@g' /tmp/TODO-LIST/PIPELINE-FULL-CD/config.xml
     sudo -u jenkins sed -i 's@dkr_python_env_url@${aws_ecr_repository.ecr_python_env.repository_url}@g' /tmp/TODO-LIST/PIPELINE-FULL-CD/config.xml
-    sudo -u jenkins sed -i 's@production_bucket_name@$aws_s3_bucket.s3_bucket_production.id}@g' /tmp/TODO-LIST/PIPELINE-FULL-CD/config.xml
     sudo -u jenkins mv /tmp/TODO-LIST/PIPELINE-FULL-CD /var/lib/jenkins/jobs/PIPELINE-FULL-CD
 
     sudo systemctl restart jenkins
