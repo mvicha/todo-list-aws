@@ -240,7 +240,7 @@ def validateApp(timeInSeconds, doLocal) {
     - doLocal: para saber si estamo trabajando en un entorno local
     - stackName: para trabajar sobre un stack de CloudFormation
 */
-def deployApp(timeInSeconds, doLocal, stackName) {
+def deployApp(timeInSeconds, doLocal, stackName, s3bucket) {
   stage('Deploy application') {
     if (!doLocal) {
       sh "docker container exec -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${stackName} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${stackName}"
@@ -304,7 +304,7 @@ node {
             // Construimos, validamos y desplegamos la app
             buildApp(timeInSeconds, doLocal, stackName)
             validateApp(timeInSeconds, doLocal)
-            deployApp(timeInSeconds, doLocal, stackName)
+            deployApp(timeInSeconds, doLocal, stackName, s3bucket)
           } catch(da) {
             // Fallo al construir o desplegar la app
             printFailure(da)

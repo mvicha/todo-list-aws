@@ -189,7 +189,3 @@ Outputs:
     Description: "Delete Lambda Function ARN"
     Value: !GetAtt todoListFcnDelete.Arn
 
-  #todoListServerLessReadOnlyIamRole:
-  #  Description: "Implicit IAM Role created for todoListFcnList function"
-  #  Value: !GetAtt todoListFcnListRole.Arn
-
