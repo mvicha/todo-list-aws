@@ -29,17 +29,17 @@ if (!env.GIT_BRANCH) {
     - stackName: Utilizado para darle un nombre al stack de CloudFormation
 */
 if (GIT_BRANCH == "origin/develop") {
-  s3bucket = "${env.S3BUCKET_NAME}"
+  s3bucket = "${env.DEVELOP_S3BUCKET_NAME}"
   doLocal = false
   doTests = true
   stackName = "dev"
 } else if (GIT_BRANCH == "origin/staging") {
-  s3bucket = "${env.S3BUCKET_NAME}"
+  s3bucket = "${env.STAGING_S3BUCKET_NAME}"
   doLocal = false
   doTests = true
   stackName = "stg"
 } else if (GIT_BRANCH == "origin/master") {
-  s3bucket = "${env.S3BUCKET_NAME}"
+  s3bucket = "${env.PRODUCTION_S3BUCKET_NAME}"
   doLocal = false
   doTests = false
   stackName = "prod"
