@@ -1,3 +1,104 @@
+# REST AWS
+
+Este Pipeline permite la ejecución de múltiples branches. Los requerimientos para que funciones son:
+
+- docker (utilizado para levantar entorno de desarrollo. Pipeline incluído en el repositorio:
+    ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/python-env
+  )
+- usuario de codecommit con su clave ssh. Instrucciones de instalación en la guía de procedimientos
+
+* Funcionamiento:
+  Este pipeline funciona en cualquier entorno/rama. Actualmente está definido para que funcione de la siguiente manera:
+  - Entorno: Desarrollo - Rama: develop - Job: Todo-List-Dev-Pipeline
+  - Entorno: Pruebas - Rama: staging - Job: Todo-List-Staging-Pipeline
+  - Entorno: Producción - Rama: master - Job: Todo-List-Production-Pipeline
+
+* El ciclo de vida sería de la siguiente forma:
+- Comenzamos trabajando en una rama descendiente de develop, por ejemplo feature-A.
+- Al terminar nuestro trabajo en feature-A haremos un pull request a develop
+- Al aprobarse develop ejecutaremos el pipeline del entorno de desarrollo (Todo-List-Develop-Pipeline)
+- Cuando estemos seguros que desarrollo está listo para promoverse haremos un pull request de develop a staging
+- Ejecutaremos el pipeline de staging (Todo-List-Staging-Pipeline)
+- Cuando estemos seguros que staging está listo para promoverse como estable haremos un pull request de staging a master
+- Ejecutaremos el pipeline de producción (Todo-List-Production-Pipeline)
+
+* Ejecución de todos los trabajos a la vez.
+- Existe un Job que se llama Todo-List-Full-Pipeline, este se ejecuta paso a paso desde desarrollo hasta producción.
+  Cada ejecución exitosa del entorno anterior hará que los cambios del entorno sean incorporados en el siguiente nivel,
+  y ejecutará el pipeline del nivel correspondiente, hasta llegar a producción
+
+* Guía de procedmientos:
+  Lo primero que debemos tener en cuenta es que este trabajo práctico tiene ciertos requerimientos. Para facilitar la
+  instalación y despliegue de los mismos se han incluído algunas notas y se han mejorado algunos de los procesos que
+  habían sido provistos para llevar a cabo dichos trabajos.
+
+  Los pasos se detallan a continuación:
+  1) Configurar Cloud9:
+    - Para configurar Cloud9 se proporciona un template en CloudFormation que incluye todo lo necesario para desplegar
+      el entorno. El archivo README.md proporciona las instrucciones necesarias para desplegar el entorno:
+        URL: git@github.com:mvicha/cloud9-env.git
+        BRANCH: dev
+  2) Configurar Jenkins:
+    - Con el entorno desplegado ejecutamos terraform para iniciar nuestro entorno de Jenkins. Este terraform ha sido
+      ampliado para incluir la creación de unos ECRs (Elastic Container Registries), en el que se guardaran algunas
+      imágenes de contenedores requeridas para que todo funcione.
+        * ecr_python_env: Contiene un entorno de desarrollo para hacer el despliegue
+      Los pasos a seguir son los siguientes:
+        * Crear un bucket en s3 para guardar los estados de terraform:
+          aws s3api create-bucket --bucket <nombre-del-bucket> --region us-east-1
+        * Inicializar terraform:
+          La versión de terraform que utilizamos en este caso es Terraform v0.14.3. Si ejecuta otra version puede
+          que se requiera realizar cambios para que el entorno se despliegue de la manera apropiada.
+          Eita el archivo de variables.tf dentro del directorio terraform. En el mismo encontrarás la variable
+          ecr_python_env_name, que debe contener el nombre del ECR que se creará para guardar la imágen de docker
+
+          Toma nota de la  dirección IP en tu máquina local, la necesitarás para ejecutar terraform. para conseguirla
+          puedes ejecutar:
+            dig +short myip.opendns.com @resolver1.opendns.com
+
+          Ahora con esos datos puedes ejecutar terraform. Esto creará el entorno de Jenkins
+            ./terraform init
+            ./terraform plan -out=plan.out
+            ./terraform apply plan.out
+        * Ya teniendo Jenkins inicializado desplegaremos los Jobs
+        * Habiendo configurado los Jobs sólo nos queda ejecutarlos
+  3) Configuración del usuario de CodeCommit:
+    El usuario de CodeCommit tiene una llave de SSH asociada, si no se ha creado todavía los pasos para la creación son los siguientes:
+      * Ejecutar ssh-keygen -t rsa /tmp/codecommit
+      * Copiar la clave pública que ha sido guardada en /tmp/codecommit.pub
+      * Dirigirse a la consola de AWS, al apartado de IAM
+      * Crear un usuario con el nombre codecommit-user y asociarle la política de acceso AWSCodeCommitFullAccess
+      * Una vez creado el acceso dirigirse a la sección de credenciales de seguridad y cargar una clave pública de SSH
+      * Copiar el ID de la clave (Este es el nombre de usuario requerido para conectarse a CodeCommit utilizando esa llave de SSH)
+      * En Jenkins ir a Administrar Jenkins - Manejo de credenciales
+      * Hacer click en Dominio Global y luego en Agregar credenciales
+        - Tipo: SSH Username with private key
+        - Scope: Global
+        - ID: codecommit
+        - Descripción: Llave que se utilizará para conectar a codecommit
+        - Username: El ID que guardamos de la clave de codecommit. Si no se redcuerda puede dirigirse a IAM y copiarlo de ahí
+        - Private key (Enter directly): Pegar la clave que creamos recién que guardamos en /tmp/codecommit
+      * Eliminar los archivos /tmp/codecommit y /tmp/codecommit.pub
+  4) Configuración de Jobs:
+    Comenzaremos por configurar el Job de python-env.
+  5) Ejecución de Jobs:
+    - El primer Job que debemos ejecutar es el de ENABLE-UNIR-CREDENTIALS. Este Job ha sido modificado para solicitar
+      ECR_URL como parámetro. Esto es para iniciar sesión. Este parámetro lo obenemos de la ejecución de terraform anterior
+      bajo el output ecr_python_env_url. En el caso de haber perdido el output se puede recuperar:
+        terraform output.
+    - El siguiente Job que debemos ejecutar es el de Python-Env
+    - Luego sólo nos queda ejecutar nuestro pipeline de desarrollo Todo-List-Dev-Pipeline o el que queramos ejecutar.
+
+
+
+
+
+
+
+
+
+
+
 # Serverless REST API
 
 Este ejemplo demuestra cómo configurar un [Servicios Web RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer#Applied_to_web_services) que le permite crear, listar, obtener, actualizar y borrar listas de Tareas pendientes(ToDo). DynamoDB se utiliza para persistir los datos.
