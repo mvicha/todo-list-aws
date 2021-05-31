@@ -251,6 +251,25 @@ def deployApp(timeInSeconds, doLocal, stackName, s3bucket) {
 }
 
 /*
+  Habilitar logs de Api Gw
+*/
+def enableApiLogs(timeInSeconds, doLocal, stackName) {
+  stage('Enable API GW logs') {
+    if (!doLocal) {
+      String restApiId = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-${stackName} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text", returnStdout: true)
+
+      sh "docker container exec -i python-env-${timeInSeconds} /home/builduser/.local/bin/aws apigateway update-stage \
+        --rest-api-id ${restApiId} \
+        --stage-name Prod \
+        --patch-operations \
+          op=replace,path=/*/*/logging/dataTrace,value=true \
+          op=replace,path=/*/*/logging/loglevel,value=Info \
+          op=replace,path=/*/*/metrics/enabled,value=true"
+    }
+  }
+}
+
+/*
   Función utilizada para hacer debug de errores
     - e: string de excepción
 */
@@ -305,6 +324,7 @@ node {
             buildApp(timeInSeconds, doLocal, stackName)
             validateApp(timeInSeconds, doLocal)
             deployApp(timeInSeconds, doLocal, stackName, s3bucket)
+            enableApiLogs(timeInSeconds, doLocal, stackName)
           } catch(da) {
             // Fallo al construir o desplegar la app
             printFailure(da)
