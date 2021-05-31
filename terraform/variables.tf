@@ -28,5 +28,5 @@ variable "codecommit_todo_list" {
 
 variable "repo_unir_credentials" {
   description = "Repositorio que contiene el job de unir"
-  default     = ""
+  default     = "git@github.com:mvicha/ENABLE_UNIR_CREDENTIALS.git"
 }
