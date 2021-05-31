@@ -29,17 +29,17 @@ if (!env.GIT_BRANCH) {
     - stackName: Utilizado para darle un nombre al stack de CloudFormation
 */
 if (GIT_BRANCH == "origin/develop") {
-  s3bucket = "es-unir-development-s3-95853-artifacts"
+  s3bucket = "${env.S3BUCKET_NAME}"
   doLocal = false
   doTests = true
   stackName = "dev"
 } else if (GIT_BRANCH == "origin/staging") {
-  s3bucket = "es-unir-staging-s3-95853-artifacts"
+  s3bucket = "${env.S3BUCKET_NAME}"
   doLocal = false
   doTests = true
   stackName = "stg"
 } else if (GIT_BRANCH == "origin/master") {
-  s3bucket = "es-unir-production-s3-95853-artifacts"
+  s3bucket = "${env.S3BUCKET_NAME}"
   doLocal = false
   doTests = false
   stackName = "prod"
@@ -94,9 +94,9 @@ def pythonBuildEnv(action, timeInSeconds, doTests) {
     case 'create':
       stage('Create Build Environment') {
         if (doTests) {
-          sh "docker container run --name python-env-${timeInSeconds} --link dynamodb-${timeInSeconds}:dynamodb --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
+          sh "docker container run --name python-env-${timeInSeconds} --link dynamodb-${timeInSeconds}:dynamodb --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} ${env.ECR_PYTHON}"
         } else {
-          sh "docker container run --name python-env-${timeInSeconds} --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
+          sh "docker container run --name python-env-${timeInSeconds} --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} ${env.ECR_PYTHON}"
         }
       }
       break;
@@ -274,7 +274,7 @@ node {
 
   // Descargamos las imágenes de docker que vamos a utilizar
   stage('Pull docker images') {
-    sh "docker image pull 750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
+    sh "docker image pull ${env.ECR_PYTHON}"
     sh "docker image pull amazon/dynamodb-local"
   }
 
