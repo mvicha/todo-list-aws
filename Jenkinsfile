@@ -256,7 +256,7 @@ def deployApp(timeInSeconds, doLocal, stackName, s3bucket) {
 def enableApiLogs(timeInSeconds, doLocal, stackName) {
   stage('Enable API GW logs') {
     if (!doLocal) {
-      String restApiId = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-${stackName} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text", returnStdout: true)
+      String restApiId = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-${stackName} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text | tr -d '\n'", returnStdout: true)
 
       sh "docker container exec -i python-env-${timeInSeconds} /home/builduser/.local/bin/aws apigateway update-stage \
         --rest-api-id ${restApiId} \
