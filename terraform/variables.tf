@@ -30,3 +30,18 @@ variable "repo_unir_credentials" {
   description = "Repositorio que contiene el job de unir"
   default     = "git@github.com:mvicha/ENABLE_UNIR_CREDENTIALS.git"
 }
+
+variable "create_repositories" {
+  description = "Crear repositorios python-env y todo-list-aws o utilizar repositorios existentes"
+  default     = false
+}
+
+variable "python_env_repo" {
+  description = "Repositorio existente de python-env"
+  default     = "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/python-env"
+}
+
+variable "todo_list_repo" {
+  description = "Repositorio existente de todo-list-aws"
+  default     = "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-aws"
+}
