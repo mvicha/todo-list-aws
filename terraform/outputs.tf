@@ -47,12 +47,10 @@ output "ecr_python_env_url" {
 }
 
 output "python_env_repo" {
-  #value = aws_codecommit_repository.python_env.clone_url_ssh
   value = local.aws_python_env_repo
 }
 
 output "todo_list_env_repo" {
-  #value = aws_codecommit_repository.todo_list.clone_url_ssh
   value = local.aws_todo_list_repo
 }
 

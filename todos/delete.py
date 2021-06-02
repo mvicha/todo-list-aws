@@ -3,8 +3,9 @@ import os
 import boto3
 from todoTableClass import handler as todoTableClass
 
-dynamodb = None
-if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
+if os.environ['ENVIRONMENT'] == 'local':
+    dynamodb = None
+else:
     dynamodb = boto3.resource('dynamodb')
 
 

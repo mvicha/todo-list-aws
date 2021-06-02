@@ -8,6 +8,10 @@ Description: >
 Globals:
   Function:
     Timeout: 30
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Sub "todoTable-${EnvironmentType}"
+        ENVIRONMENT: !Ref EnvironmentType
 
 Parameters:
   EnvironmentType:
@@ -150,7 +154,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     Properties:
-      # TableName: !Sub "todoTable-${EnvironmentType}"
+      TableName: !Sub "todoTable-${EnvironmentType}"
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
