@@ -13,16 +13,17 @@ function help {
     echo -en "\n\tbuild:\t\tConstruir el changeset de la aplicación desde el ambiente local"
     echo -en "\n\tdeploy:\t\tDesplegar la aplicación desde el ambiente local"
     echo -en "\n\tundeploy:\tElimna deploy de cloudformation\n"
-    echo -en "\nOpciones para build, deploy y undeploy"
-    echo -en "\n\tbuild <environmentType>"
-    echo -en "\n\tdeploy <environmentType> <s3bucket>"
-    echo -en "\n\tundeploy <environmentType>\n\n"
+    echo -en "\nOpciones para run-integration-tests, build, deploy y undeploy"
+    echo -en "\n\t${0} run-integration-tests <environmentType>"
+    echo -en "\n\t${0} build <environmentType>"
+    echo -en "\n\t${0} deploy <environmentType> <s3bucket>"
+    echo -en "\n\t${0} undeploy <environmentType>\n\n"
 
     echo "Pasos a seguir:"
     echo -en "\t1) Crear la estructura: ${0} create"
     echo -en "\n\t2) Ejecutar tests estáticos: ${0} run-static-tests"
     echo -en "\n\t3) Iniciar la API: ${0} run-api"
-    echo -en "\n\t4) Ejecutar tests de integración: ${0} run-integration-tests"
+    echo -en "\n\t4) Ejecutar tests de integración: ${0} run-integration-tests <environmentType>"
     echo -en "\n\t5) Terminar la ejecución: ${0} destroy\n\n"
 }
 
@@ -30,9 +31,24 @@ function cleanUp {
     docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds rm -rf .aws-sam/*
 }
 
+function validateEnv {
+    env=${1}
+    arrEnvironments=("local" "dev" "stg" "prod")
+    for environment in "${arrEnvironments[@]}"; do
+        if [[ "${env}" == "${environment}" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 case ${action} in
-    "create")
+    -h|--help)
+        help
+        ;;
+    create)
         if [[ -z "$(docker network ls --format '{{ .Name }}' | egrep aws | tr -d '\n')" ]]; then
+            echo "Creating aws network"
             docker network create aws
         else
             echo "Docker network already exists"
@@ -68,71 +84,87 @@ case ${action} in
             fi
         fi
         ;;
-    "run-static-tests")
+    run-static-tests)
         docker container exec -i python-env-timeInSeconds /opt/todo-list-aws/tests/run_tests.sh
         docker container exec -i python-env-timeInSeconds /opt/todo-list-aws/tests/run_unittest.sh
         ;;
-    "run-api")
+    run-api)
         docker container exec -it -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/sam local start-api -n env.json --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws --docker-volume-basedir ${PWD}
         ;;
-    "run-integration-tests")
-        docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /opt/todo-list-aws/tests/run_integration.sh local
+    run-integration-tests)
+        if [[ -n "${2}" ]]; then
+            environmentType=${2}
+            result="$(validateEnv ${environmentType})"
+            if [[ ${?} -eq 0 ]]; then
+                docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /opt/todo-list-aws/tests/run_integration.sh ${environmentType}
+            else
+                help
+            fi
+        else
+            help
+        fi
         ;;
-    "destroy")
+    destroy)
         cleanUp
         docker container rm -f python-env-timeInSeconds
         docker container rm -f dynamodb-timeInSeconds
         docker network rm aws
         ;;
-    "build")
+    build)
         if [[ -n "${2}" ]]; then
             environmentType=${2}
-            echo "Build parameters:"
-            echo "Env: ${environmentType}"
-            cleanUp
-            docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/sam build --region us-east-1 --debug --docker-network aws --parameter-overrides EnvironmentType=${environmentType}
-            docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation validate-template --template-body file://.aws-sam/build/template.yaml
+            result="$(validateEnv ${environmentType})"
+            if [[ ${?} -eq 0 ]]; then
+                echo "Build parameters:"
+                echo "Env: ${environmentType}"
+                cleanUp
+                docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/sam build --region us-east-1 --debug --docker-network aws --parameter-overrides EnvironmentType=${environmentType}
+                docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation validate-template --template-body file://.aws-sam/build/template.yaml
+            else
+                help
+            fi
         else
             help
         fi
         ;;
-    "deploy")
+    deploy)
         if [[ -n "${2}" && -n "${3}" ]]; then
             environmentType=${2}
-            s3bucket=${3}
-            echo "Deploy parameters:"
-            echo "Env: ${environmentType}"
-            echo "Bucket: ${s3bucket}"
-            docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${environmentType} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${environmentType}
-
-            restApiId=$(docker container exec -i python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation describe-stacks --stack-name todo-list-aws-${environmentType} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text | tr -d '\n')
-            docker container exec -i python-env-timeInSeconds /home/builduser/.local/bin/aws apigateway update-stage \
-                --rest-api-id ${restApiId} \
-                --stage-name Prod \
-                --patch-operations \
-                    op=replace,path=/*/*/logging/dataTrace,value=true \
-                    op=replace,path=/*/*/logging/loglevel,value=Info \
-                    op=replace,path=/*/*/metrics/enabled,value=true
+            result="$(validateEnv ${environmentType})"
+            if [[ ${?} -eq 0 ]]; then
+                s3bucket=${3}
+                echo "Deploy parameters:"
+                echo "Env: ${environmentType}"
+                echo "Bucket: ${s3bucket}"
+                docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${environmentType} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${environmentType}
+    
+                restApiId=$(docker container exec -i python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation describe-stacks --stack-name todo-list-aws-${environmentType} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text | tr -d '\n')
+                docker container exec -i python-env-timeInSeconds /home/builduser/.local/bin/aws apigateway update-stage \
+                    --rest-api-id ${restApiId} \
+                    --stage-name Prod \
+                    --patch-operations \
+                        op=replace,path=/*/*/logging/dataTrace,value=true \
+                        op=replace,path=/*/*/logging/loglevel,value=Info \
+                        op=replace,path=/*/*/metrics/enabled,value=true
+            else
+                help
+            fi
         else
             help
         fi
         ;;
-    "undeploy")
+    undeploy)
         if [[ -n "${2}" ]]; then
             environmentType=${2}
-            echo "Undeploy parameters:"
-            echo "Env: ${environmentType}"
-            cleanUp
-            docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation delete-stack --stack-name todo-list-aws-${environmentType}
-        fi
-        ;;
-    "run-integration-tests-remote")
-        if [[ -n "${2}" ]]; then
-            environmentType=${2}
-            echo "Run integration tests on ${environmentType}"
-            docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /opt/todo-list-aws/tests/run_integration.sh ${environmentType}
-        else
-            help
+            result="$(validateEnv ${environmentType})"
+            if [[ ${?} -eq 0 ]]; then
+                echo "Undeploy parameters:"
+                echo "Env: ${environmentType}"
+                cleanUp
+                docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation delete-stack --stack-name todo-list-aws-${environmentType}
+            else
+                help
+            fi
         fi
         ;;
     *)
