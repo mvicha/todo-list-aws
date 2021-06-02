@@ -54,33 +54,39 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
           Toma nota de la  dirección IP en tu máquina local, la necesitarás para ejecutar terraform. para conseguirla
           puedes ejecutar:
-            dig +short myip.opendns.com @resolver1.opendns.com
+            export TF_VAR_myip=$(dig +short myip.opendns.com @resolver1.opendns.com)
 
           Ahora con esos datos puedes ejecutar terraform. Esto creará el entorno de Jenkins
             ./terraform init
             ./terraform plan -out=plan.out
             ./terraform apply plan.out
-        * Ya teniendo Jenkins inicializado desplegaremos los Jobs
-        * Habiendo configurado los Jobs sólo nos queda ejecutarlos
+
+        - Qué pasos realiza el proceso de Terraform:
+           1) Creación de VPC
+           2) Creación de Subnets
+           3) Creación de Security Groups
+           4) Creación de codecommit user
+           5) Asignación de privilegios CodeCommit Full al usuario codecommit recientemente creado
+           6) Creación de DKR para guardar la imágen de python-env
+           7) (opcional) Creación del repositorio python-env
+           8) (opcional) Creación del repositorio todo-list-aws
+           9) Despliegue de la instancia de Jenkins
+          10) Configuración de Jobs de Jenkins
+
+          EL PROCESO DE TERRAFORM AUTOMÁTICAMENTE CONFIGURA LOS JOBS CON LOS PARÁMETROS REQUERIDOS GRACIAS A LA EJECUCIÓN DE user-data.
+          El proceso en sí descarga un repositorio con los jobs y los parametriza, luego reinicia el servicio de Jenkins para que los
+          Jobs queden configurados
+
   3) Configuración del usuario de CodeCommit:
     El usuario de CodeCommit tiene una llave de SSH asociada, si no se ha creado todavía los pasos para la creación son los siguientes:
-      * Ejecutar ssh-keygen -t rsa /tmp/codecommit
-      * Copiar la clave pública que ha sido guardada en /tmp/codecommit.pub
-      * Dirigirse a la consola de AWS, al apartado de IAM
-      * Crear un usuario con el nombre codecommit-user y asociarle la política de acceso AWSCodeCommitFullAccess
-      * Una vez creado el acceso dirigirse a la sección de credenciales de seguridad y cargar una clave pública de SSH
-      * Copiar el ID de la clave (Este es el nombre de usuario requerido para conectarse a CodeCommit utilizando esa llave de SSH)
       * En Jenkins ir a Administrar Jenkins - Manejo de credenciales
       * Hacer click en Dominio Global y luego en Agregar credenciales
         - Tipo: SSH Username with private key
         - Scope: Global
         - ID: codecommit
         - Descripción: Llave que se utilizará para conectar a codecommit
-        - Username: El ID que guardamos de la clave de codecommit. Si no se redcuerda puede dirigirse a IAM y copiarlo de ahí
-        - Private key (Enter directly): Pegar la clave que creamos recién que guardamos en /tmp/codecommit
-      * Eliminar los archivos /tmp/codecommit y /tmp/codecommit.pub
-  4) Configuración de Jobs:
-    Comenzaremos por configurar el Job de python-env.
+        - Username: El ID que obtenemos en la salida de Terraform: codecommit_key_id
+        - Private key (Enter directly): Pegar la clave de la salida de Terraform: key_pair_codecommit
   5) Ejecución de Jobs:
     - El primer Job que debemos ejecutar es el de ENABLE-UNIR-CREDENTIALS. Este Job ha sido modificado para solicitar
       ECR_URL como parámetro. Esto es para iniciar sesión. Este parámetro lo obenemos de la ejecución de terraform anterior
@@ -88,6 +94,13 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
         terraform output.
     - El siguiente Job que debemos ejecutar es el de Python-Env
     - Luego sólo nos queda ejecutar nuestro pipeline de desarrollo Todo-List-Dev-Pipeline o el que queramos ejecutar.
+
+  *** NOTA PARA IMPORTAR REPOSITORIOS:
+    Seguramente tengamos que imoprtar los repositorios de python-env y todo-list-aws en los reciéntemente creados por Teraform. Se
+    entrega un script (utils/fix.sh) que facilitará la tarea. Este script recibe como parámetros el path del directorio del alumno y la nueva
+    url del repositorio
+    A continuación un ejemplo:
+      $ utils/fix.sh todo-list-aws git@github.com:mvicha/todo-list-aws.git ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-aws-tf
 
 
 
