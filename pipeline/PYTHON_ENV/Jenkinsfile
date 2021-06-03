@@ -1,0 +1,36 @@
+String gitRepo = "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/python-env"
+String branchName = "master"
+String ecrDest = "750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
+String credentialsId = "codecommit"
+
+
+pipeline {
+  agent any
+
+  stages {
+    stage('Clean') {
+      steps {
+        deleteDir()
+        sh 'printenv'
+      }
+    }
+  
+    stage('Checkout') {
+      steps {
+        git branch: branchName,
+          credentialsId: "${credentialsId}",
+          url: "${gitRepo}"
+      }
+    }
+
+    stage('Build docker image') {
+      steps {
+        sh("""
+            docker image build -t ${ecrDest} .
+            docker image push ${ecrDest}
+        """)
+      }
+    }
+  }
+}
+

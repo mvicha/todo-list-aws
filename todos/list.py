@@ -4,8 +4,11 @@ import decimalencoder
 import boto3
 from todoTableClass import handler as todoTableClass
 
-dynamodb = None
-if os.environ['DYNAMODB_TABLE'] != 'TodoDynamoDbTable':
+print(f'DyanmoDB Table es: {os.environ["DYNAMODB_TABLE"]}')
+
+if os.environ['ENVIRONMENT'] == 'local':
+    dynamodb = None
+else:
     dynamodb = boto3.resource('dynamodb')
 
 

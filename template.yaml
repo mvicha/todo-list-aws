@@ -8,6 +8,10 @@ Description: >
 Globals:
   Function:
     Timeout: 30
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Sub "todoTable-${EnvironmentType}"
+        ENVIRONMENT: !Ref EnvironmentType
 
 Parameters:
   EnvironmentType:
@@ -150,7 +154,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     Properties:
-      # TableName: !Sub "todoTable-${EnvironmentType}"
+      TableName: !Sub "todoTable-${EnvironmentType}"
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -188,8 +192,4 @@ Outputs:
   todoListResourceFcnDelete:
     Description: "Delete Lambda Function ARN"
     Value: !GetAtt todoListFcnDelete.Arn
-
-  #todoListServerLessReadOnlyIamRole:
-  #  Description: "Implicit IAM Role created for todoListFcnList function"
-  #  Value: !GetAtt todoListFcnListRole.Arn
 

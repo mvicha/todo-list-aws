@@ -8,5 +8,5 @@ else
     export ENDPOINT_URL=$(aws cloudformation describe-stacks --stack-name todo-list-aws-${1} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiUrl`].OutputValue' --output text)
 fi
 
-echo 'Run final testing'
+echo "Run final testing on ${ENDPOINT_URL}"
 pytest tests/integration -vvv

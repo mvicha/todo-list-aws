@@ -1,142 +1,53 @@
 #create a new instance of the latest Ubuntu 20.04 on an
 # t3.micro node with an AWS Tag naming it "HelloWorld"
-provider "aws" {
-  region  = "us-east-1"
-  profile = "default"
-}
+data "aws_caller_identity" "current" {}
 
+data "template_file" "setup" {
+  template = file("${path.module}/templates/setup.tpl")
 
-resource "aws_default_vpc" "default" {
-  tags = {
-    Name = "Default VPC"
+  vars = {
+    jenkinsHome     = var.jenkinsHome
+    jenkinsVolume   = var.jenkinsVolume
+    jenkinsHttp     = var.jenkinsHttp
+    jenkinsHttps    = var.jenkinsHttps
+    jenkinsImage    = var.jenkinsImage
+    jenkinsUser     = var.jenkinsUser
+    jenkinsPassword = var.jenkinsPassword
+    ssh_user        = var.ssh_user
+    accountId       = data.aws_caller_identity.current.account_id
+    pythonEcr       = aws_ecr_repository.ecr_python_env.repository_url
+    pythonRepo      = local.aws_python_env_repo
+    todoRepo        = local.aws_todo_list_repo
+    devBucket       = aws_s3_bucket.s3_bucket_development.id
+    stgBucket       = aws_s3_bucket.s3_bucket_staging.id
+    prodBucket      = aws_s3_bucket.s3_bucket_production.id
   }
 }
 
-resource "aws_default_security_group" "default" {
-  vpc_id = aws_default_vpc.default.id
+data "template_cloudinit_config" "cloud_init_config" {
+  gzip          = true
+  base64_encode = true
 
-  ingress {
-    protocol  = -1
-    self      = true
-    from_port = 0
-    to_port   = 0
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  part {
+    filename     = "setup.cfg"
+    content_type = "text/cloud-config"
+    #content_type = "text/x-shellscript"
+    content      = data.template_file.setup.rendered
   }
 }
-
-data "http" "myip" {
-  url = "http://ipv4.icanhazip.com"
-}
-
-resource "aws_default_subnet" "default_az1" {
-  availability_zone = "us-east-1a"
-
-  tags = {
-    Name = "Default subnet for us-east-1a"
-  }
-}
-
-resource "aws_security_group" "allow_all" {
-  name        = "es-unir-ec2-jenkins-all-traffic-${random_integer.server.result}"
-  description = "Allow all inbound traffic"
-
-
-  ingress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    cidr_blocks     = ["${chomp(data.http.myip.body)}/32", "${var.myip}/32"]
-    security_groups = [aws_default_security_group.default.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  vpc_id = aws_default_vpc.default.id
-
-  tags = {
-    Name        = "es-unir-ec2-production-jenkins-server-securityGroup"
-    Country     = "es"
-    Team        = "unir"
-    Environment = "production"
-  }
-}
-
-resource "tls_private_key" "this" {
-  algorithm = "RSA"
-}
-
-module "key_pair" {
-  source = "terraform-aws-modules/key-pair/aws"
-
-  key_name   = "es-unir-keypair-${random_integer.server.result}"
-  public_key = tls_private_key.this.public_key_openssh
-}
-
 
 resource "aws_instance" "jenkins" {
-  ami           = var.ami_id # us-east-1
-  instance_type = var.instance_type
-  key_name      = module.key_pair.key_pair_key_name
+  ami               = var.ami_id # us-east-1
+  instance_type     = var.instance_type
+  key_name          = module.key_pair.key_pair_key_name
+  availability_zone = "us-east-1a"
 
   security_groups = [aws_security_group.allow_all.name]
   tags = {
     "Name" = "es-unir-ec2-production-jenkins-server-${random_integer.server.result}"
   }
-}
 
-resource "aws_s3_bucket" "s3_bucket_development" {
-  bucket = "es-unir-development-s3-${random_integer.server.result}-artifacts"
-  acl    = "private"
-
-  tags = {
-    Name        = "es-unir-development-s3-${random_integer.server.result}-artifacts"
-    Country     = "es"
-    Team        = "unir"
-    Environment = "development"
-  }
-
-  depends_on = [random_integer.server]
-}
-
-resource "aws_s3_bucket" "s3_bucket_staging" {
-  bucket = "es-unir-staging-s3-${random_integer.server.result}-artifacts"
-  acl    = "private"
-
-  tags = {
-    Name        = "es-unir-staging-s3-${random_integer.server.result}-artifacts"
-    Country     = "es"
-    Team        = "unir"
-    Environment = "staging"
-  }
-
-  depends_on = [random_integer.server]
-}
-
-
-resource "aws_s3_bucket" "s3_bucket_production" {
-  bucket = "es-unir-production-s3-${random_integer.server.result}-artifacts"
-  acl    = "private"
-
-  tags = {
-    Name        = "es-unir-production-s3-${random_integer.server.result}-artifacts"
-    Country     = "es"
-    Team        = "unir"
-    Environment = "production"
-  }
-
-  depends_on = [random_integer.server]
-
+  user_data_base64 = data.template_cloudinit_config.cloud_init_config.rendered
 }
 
 resource "random_integer" "server" {
@@ -148,37 +59,23 @@ resource "random_integer" "server" {
   }
 }
 
-resource "null_resource" "super_secret" {
-  # triggers = {
-  #   hash_super_secret = sha256(tls_private_key.this.private_key_pem)
-  # }
-
+resource "null_resource" "wait_for_cloud_init" {
   triggers = {
-    always_run = timestamp()
+    public_ip = aws_instance.jenkins.public_ip
   }
 
-
-  provisioner "local-exec" {
-    command = "echo $SUPER_SECRET > key_pem "
-    environment = {
-      SUPER_SECRET = tls_private_key.this.private_key_pem
-    }
-  }
-}
-
-resource "null_resource" "create_pem" {
-  # triggers = {
-  #   hash_super_secret = sha256(tls_private_key.this.private_key_pem)
-  # }
-
-  triggers = {
-    always_run = timestamp()
+  connection {
+    type        = "ssh"
+    host        = aws_instance.jenkins.public_ip
+    user        = var.ssh_user
+    private_key = tls_private_key.this.private_key_pem
+    port        = var.ssh_port
+    agent       = true
   }
 
-
-  provisioner "local-exec" {
-    command = "resources/get-ssh-key.sh"
+  provisioner "remote-exec" {
+    inline = [
+      "while [ ! -f ${var.jenkinsVolume}/custom_setup ]; do sleep 10; done"
+    ]
   }
-
-  depends_on = [null_resource.super_secret]
 }

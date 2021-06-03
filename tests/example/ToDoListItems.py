@@ -5,7 +5,8 @@ from botocore.exceptions import ClientError
 def list_todo(dynamodb=None):
     if not dynamodb:
         dynamodb = boto3.resource(
-            'dynamodb', endpoint_url="http://dynamodb:8000")
+            'dynamodb', endpoint_url="http://dynamodb:8000",
+            region_name='us-east-1')
 
     table = dynamodb.Table('todoTable')
 
