@@ -4,7 +4,8 @@ import boto3
 def create_todo_table(dynamodb=None):
     if not dynamodb:
         dynamodb = boto3.resource(
-            'dynamodb', endpoint_url='http://dynamodb:8000')
+            'dynamodb', endpoint_url='http://dynamodb:8000',
+            region_name='us-east-1')
 
     table = dynamodb.create_table(
         TableName='todoTable',

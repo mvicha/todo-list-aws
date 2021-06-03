@@ -52,6 +52,9 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
           Eita el archivo de variables.tf dentro del directorio terraform. En el mismo encontrarás la variable
           ecr_python_env_name, que debe contener el nombre del ECR que se creará para guardar la imágen de docker
 
+          Si no se utilizara el default profile de AWS se debería exportar el valor a utilizar:
+            export AWS_PROFILE=unir
+
           Toma nota de la  dirección IP en tu máquina local, la necesitarás para ejecutar terraform. para conseguirla
           puedes ejecutar:
             export TF_VAR_myip=$(dig +short myip.opendns.com @resolver1.opendns.com)
@@ -76,6 +79,13 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
           EL PROCESO DE TERRAFORM AUTOMÁTICAMENTE CONFIGURA LOS JOBS CON LOS PARÁMETROS REQUERIDOS GRACIAS A LA EJECUCIÓN DE user-data.
           El proceso en sí descarga un repositorio con los jobs y los parametriza, luego reinicia el servicio de Jenkins para que los
           Jobs queden configurados
+
+  3) Obtención de las credenciales de Jenkins:
+    Como la AMI de Jenkins que fue provista al principio dejó de funcionar/existir me vi en la necesidad de instalar una nueva. Esta nueva
+    no tiene el usuario y password como la anterior. Para obtener el usuario y password hay que seguir los siguientes pasos:
+
+      - Obteniendo la conexión ssh que nos da el output de terraform (ssh_connection) ejecutamos:
+        ssh -i resources/jenkins/key.pem bitnami@1.1.1.1 cat /home/bitnami/bitnami_credentials
 
   3) Configuración del usuario de CodeCommit:
     El usuario de CodeCommit tiene una llave de SSH asociada, si no se ha creado todavía los pasos para la creación son los siguientes:
