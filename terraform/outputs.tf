@@ -32,10 +32,10 @@ output "jenkins_instance_security_group_id" {
   value = aws_security_group.allow_all.id
 }
 output "ssh_connection" {
-  value = "ssh -i resources/jenkins/key.pem ec2-user@${aws_instance.jenkins.public_ip}"
+  value = "ssh -i resources/jenkins/key.pem ${var.ssh_user}@${aws_instance.jenkins.public_ip}"
 }
 output "jenkins_url" {
-  value = "http://${aws_instance.jenkins.public_ip}:8080"
+  value = "http://${aws_instance.jenkins.public_ip}:${var.jenkinsHttp}"
 }
 
 output "jenkins_public_ip" {

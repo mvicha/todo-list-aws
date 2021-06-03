@@ -1,5 +1,6 @@
 variable "ami_id" {
-  default = "ami-0c2fc02255044bf94"
+  #default = "ami-0c2fc02255044bf94"
+  default = "ami-0d5eff06f840b45e9"
 }
 
 variable "myip" {
@@ -33,7 +34,7 @@ variable "repo_unir_credentials" {
 
 variable "create_repositories" {
   description = "Crear repositorios python-env y todo-list-aws o utilizar repositorios existentes"
-  default     = false
+  default     = true
 }
 
 variable "python_env_repo" {
@@ -44,4 +45,40 @@ variable "python_env_repo" {
 variable "todo_list_repo" {
   description = "Repositorio existente de todo-list-aws"
   default     = "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-aws"
+}
+
+variable "jenkinsHome" {
+  default = "/var/lib/jenkins"
+}
+
+variable "jenkinsVolume" {
+  default = "/var/lib/jenkins"
+}
+
+variable "ssh_port" {
+  default = 22
+}
+
+variable "jenkinsHttp" {
+  default = 80
+}
+
+variable "jenkinsHttps" {
+  default = 443
+}
+
+variable "jenkinsUser" {
+  default = "unir"
+}
+
+variable "jenkinsPassword" {
+  default = "changeme"
+}
+
+variable "ssh_user" {
+  default = "ec2-user"
+}
+
+variable "jenkinsImage" {
+  default = "mvilla/jenkinsawsdocker:latest"
 }
