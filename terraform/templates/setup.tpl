@@ -1,11 +1,18 @@
 #cloud-config
 bootcmd:
-  - mkdir ${jenkinsVolume}
+  - mkdir /var/lib/docker
   - while [ ! -b $(readlink -f /dev/xvdc) ]; do echo "Waiting for xvdc device"; sleep 5; done
   - blkid $(readlink -f /dev/xvdc) || mkfs -t ext4 $(readlink -f /dev/xvdc)
-  - e2label $(readlink -f /dev/xvdc) jenkins
+  - e2label $(readlink -f /dev/xvdc) docker
+  - grep -q ^LABEL=docker /etc/fstab || echo 'LABEL=docker /var/lib/docker ext4 defaults,nofail 0 2' >> /etc/fstab
+  - grep -q "$(readlink -f /dev/xvdc) /var/lib/docker " /proc/mounts | mount /var/lib/docker
+
+  - mkdir ${jenkinsVolume}
+  - while [ ! -b $(readlink -f /dev/xvdd) ]; do echo "Waiting for xvdd device"; sleep 5; done
+  - blkid $(readlink -f /dev/xvdd) || mkfs -t ext4 $(readlink -f /dev/xvdd)
+  - e2label $(readlink -f /dev/xvdd) jenkins
   - grep -q ^LABEL=jenkins /etc/fstab || echo 'LABEL=jenkins ${jenkinsVolume} ext4 defaults,nofail 0 2' >> /etc/fstab
-  - grep -q "$(readlink -f /dev/xvdc) ${jenkinsVolume} " /proc/mounts | mount ${jenkinsVolume}
+  - grep -q "$(readlink -f /dev/xvdd) ${jenkinsVolume} " /proc/mounts | mount ${jenkinsVolume}
 
 repo_update: true
 groups:
@@ -74,6 +81,6 @@ runcmd:
   # Jenkins
   - docker network create jenkins-network
   - docker image pull mvilla/jenkinsawsdocker:latest
-  - docker container run -d --name jenkins --hostname jenkins -p ${jenkinsHttp}:8080 -p ${jenkinsHttps}:8443 --network jenkins-network --volume ${jenkinsVolume}:${jenkinsHome} -e JENKINS_USERNAME="${jenkinsUser}" -e JENKINS_PASSWORD="${jenkinsPassword}" -e JENKINS_HOME=${jenkinsHome} -e DOCKER_HOST=172.17.0.1:2375 ${jenkinsImage}
+  - docker container run -d --name jenkins --hostname jenkins -p ${jenkinsHttp}:8080 -p ${jenkinsHttps}:8443 --network jenkins-network --volume ${jenkinsVolume}:${jenkinsHome} -e JENKINS_USERNAME="${jenkinsUser}" -e JENKINS_PASSWORD="${jenkinsPassword}" -e JENKINS_HOME=${jenkinsHome} -e DOCKER_HOST=172.17.0.1:2375 --restart unless-stopped ${jenkinsImage}
 
   - echo "The setup has been completed" > ${jenkinsVolume}/custom_setup
