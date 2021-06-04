@@ -10,9 +10,9 @@ function help {
     echo -en "\n\trun-integration-tests\tEjecuta tests de integración"
     echo -en "\n\trun-api:\t\tInicia la api"
     echo -en "\n\tdestroy:\t\tElimina la estructura de test"
-    echo -en "\n\tbuild:\t\tConstruir el changeset de la aplicación desde el ambiente local"
-    echo -en "\n\tdeploy:\t\tDesplegar la aplicación desde el ambiente local"
-    echo -en "\n\tundeploy:\tElimna deploy de cloudformation\n"
+    echo -en "\n\tbuild:\t\t\tConstruir el changeset de la aplicación desde el ambiente local"
+    echo -en "\n\tdeploy:\t\t\tDesplegar la aplicación desde el ambiente local"
+    echo -en "\n\tundeploy:\t\tElimna deploy de cloudformation\n"
     echo -en "\nOpciones para run-integration-tests, build, deploy y undeploy"
     echo -en "\n\t${0} run-integration-tests <environmentType>"
     echo -en "\n\t${0} build <environmentType>"
@@ -28,7 +28,7 @@ function help {
 }
 
 function cleanUp {
-    docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds rm -rf .aws-sam/*
+    docker container exec -i -w /opt/todo-list-aws -u root python-env-timeInSeconds rm -rf .aws-sam/*
 }
 
 function validateEnv {
@@ -89,7 +89,7 @@ case ${action} in
         docker container exec -i python-env-timeInSeconds /opt/todo-list-aws/tests/run_unittest.sh
         ;;
     run-api)
-        docker container exec -it -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/sam local start-api -n env.json --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws --docker-volume-basedir ${PWD}
+        docker container exec -it -w /opt/todo-list-aws -u root -e HOME=/home/builduser python-env-timeInSeconds bash -c "/home/builduser/.local/bin/sam local start-api -n env.json --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws --docker-volume-basedir ${PWD}"
         ;;
     run-integration-tests)
         if [[ -n "${2}" ]]; then

@@ -32,7 +32,73 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   instalación y despliegue de los mismos se han incluído algunas notas y se han mejorado algunos de los procesos que
   habían sido provistos para llevar a cabo dichos trabajos.
 
-  Los pasos se detallan a continuación:
+  Dividiremos estos pasos en despliegue en entorno local y despliegue en entorno cloud.
+
+  Los pasos se detallan a continuación para ambos entornos:
+
+* Despliegue en entorno local:
+  Para desplegar en el entorno local utilizaremos el script ubicado en utils/runlocal.sh. Este script realiza las siguientes
+  tareas:
+  - Crear el entorno local de desarrollo
+  - Ejecutar pruebas de código estático
+  - Inicializar SAM API
+  - Ejecutar pruebas de integración
+  - Construir el changeset de la aplicación y validarlo
+  - Desplegar el changeset a un entorno cloud desde el ambiente local
+  - Eliminar el despliegue de un entorno cloud
+  - Destruir el entorno de desarrollo local
+
+  Para llevar a cabo el despliegue procederemos de la siguiente manera:
+  1) Creación del entorno local de desarrollo:
+    utils/runlocal.sh create
+
+  2) Ejecución de pruebas de código estático
+    utils/runlocal.sh run-static-tests
+
+  3) Inicialización de SAM API local (Esta ejecución a diferencia de las anteriores seguirá corriendo mientras no se cancele
+    con CTRL+C.)
+    utils/runlocal.sh run-api
+
+  4) Ejecución de pruebas de integración (Esta ejecución deberá realizarse desde otra terminal sin cancelar la ejecución de
+    SAM API local)
+    utils/runlocal.sh run-integration-tests local
+
+    -- NOTA: la ejecución de pruebas de integración permitiría testear entornos desplegados en la nube. Para ello en vez de
+    incluir el parámetro "local", deberíamos incluir el parámetro del entorno que queremos verificar. Los valores soportados
+    son: "local", "dev", "stg" y "prod"
+
+  5) Creación del changeset
+    utis/runlocal.sh build "dev"
+
+    -- NOTA: Como en el caso anterior, esta ejecución permite la creación de nuestro build para los distintos ambientes mediante
+    el paso del entorno. Los valores sportados son: "dev", "stg" y "prod"
+
+  6) Despliegue del entorno
+    utils/runlocal.sh deploy "dev"
+
+    -- NOTA: Como en el caso anterior, esta ejecución permite el despliegue del entorno en el ambiente cloud mediante los
+    parámetros provistos. Los valores sportados son: "dev", "stg" y "prod"
+
+  7) Eliminación del despliegue de un ambiente cloud
+    utils/runlocal.sh undeploy "dev"
+
+    -- NOTA: Como en el caso anterior, esta ejecución permite la eliminación del despliegue del ambiente cloud mediante los
+    parámetros provistos. Los valores sportados son: "dev", "stg" y "prod"
+
+  8) Destrucción del entorno de desarrollo local
+    utils/runlocal.sh destroy
+
+  Pueden presentarse errores al momento de la ejecución. Si se encontrara con un error similar a:
+
+  - Unable to find image '750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest' locally
+  - docker: Error response from daemon: Head https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env/manifests/latest: no basic auth credentials.
+
+  Se debe a que no tiene las credenciales configuradas para poder descargar las imágenes del entorno local. Debería ejecutar lo
+  siguiente para resolver el problema, y volver a intentar la ejecución:
+  > aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env
+
+
+* Despliegue en un entorno Cloud
   1) Configurar Cloud9:
     - Para configurar Cloud9 se proporciona un template en CloudFormation que incluye todo lo necesario para desplegar
       el entorno. El archivo README.md proporciona las instrucciones necesarias para desplegar el entorno:
