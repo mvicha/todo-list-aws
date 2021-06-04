@@ -7,13 +7,13 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   )
 - usuario de codecommit con su clave ssh. Instrucciones de instalación en la guía de procedimientos
 
-* Funcionamiento:
+## Funcionamiento:
   Este pipeline funciona en cualquier entorno/rama. Actualmente está definido para que funcione de la siguiente manera:
   - Entorno: Desarrollo - Rama: develop - Job: Todo-List-Dev-Pipeline
   - Entorno: Pruebas - Rama: staging - Job: Todo-List-Staging-Pipeline
   - Entorno: Producción - Rama: master - Job: Todo-List-Production-Pipeline
 
-* El ciclo de vida sería de la siguiente forma:
+### El ciclo de vida sería el siguiente:
   - Comenzamos trabajando en una rama descendiente de develop, por ejemplo feature-A.
   - Al terminar nuestro trabajo en feature-A haremos un pull request a develop
   - Al aprobarse develop ejecutaremos el pipeline del entorno de desarrollo (Todo-List-Develop-Pipeline)
@@ -22,12 +22,16 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   - Cuando estemos seguros que staging está listo para promoverse como estable haremos un pull request de staging a master
   - Ejecutaremos el pipeline de producción (Todo-List-Production-Pipeline)
 
-* Ejecución de todos los trabajos a la vez.
+  >>>
+  <details>
+  <summary>Ejecución de todos los trabajos a la vez.</summary>
   - Existe un Job que se llama Todo-List-Full-Pipeline, este se ejecuta paso a paso desde desarrollo hasta producción.
     Cada ejecución exitosa del entorno anterior hará que los cambios del entorno sean incorporados en el siguiente nivel,
     y ejecutará el pipeline del nivel correspondiente, hasta llegar a producción
+  </details>
+  >>>
 
-* Guía de procedmientos:
+## Guía de procedmientos:
   Lo primero que debemos tener en cuenta es que este trabajo práctico tiene ciertos requerimientos. Para facilitar la
   instalación y despliegue de los mismos se han incluído algunas notas y se han mejorado algunos de los procesos que
   habían sido provistos para llevar a cabo dichos trabajos.
@@ -36,7 +40,7 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
   Los pasos se detallan a continuación para ambos entornos:
 
-* Despliegue en entorno local:
+### Despliegue en entorno local:
   Para desplegar en el entorno local utilizaremos el script ubicado en utils/runlocal.sh. Este script realiza las siguientes
   tareas:
   - Crear el entorno local de desarrollo
@@ -71,7 +75,7 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
     utils/runlocal.sh run-integration-tests local
     ```
 
-    -- NOTA: la ejecución de pruebas de integración permitiría testear entornos desplegados en la nube. Para ello en vez de
+    > **NOTA:** la ejecución de pruebas de integración permitiría testear entornos desplegados en la nube. Para ello en vez de
     incluir el parámetro "local", deberíamos incluir el parámetro del entorno que queremos verificar. Los valores soportados
     son: "local", "dev", "stg" y "prod"
 
@@ -80,24 +84,24 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
     utis/runlocal.sh build "dev"
     ```
 
-    -- NOTA: Como en el caso anterior, esta ejecución permite la creación de nuestro build para los distintos ambientes mediante
-    el paso del entorno. Los valores sportados son: "dev", "stg" y "prod"
+    > **NOTA:** Como en el caso anterior, esta ejecución permite la creación de nuestro build para los distintos ambientes mediante
+    el paso del entorno. Los valores sportados son: "**dev**", "**stg**" y "**prod**"
 
   6) Despliegue del entorno
     ```bash
     utils/runlocal.sh deploy "dev"
     ```
 
-    -- NOTA: Como en el caso anterior, esta ejecución permite el despliegue del entorno en el ambiente cloud mediante los
-    parámetros provistos. Los valores sportados son: "dev", "stg" y "prod"
+    > **NOTA:** Como en el caso anterior, esta ejecución permite el despliegue del entorno en el ambiente cloud mediante los
+    parámetros provistos. Los valores sportados son: "**dev**", "**stg**" y "**prod**"
 
   7) Eliminación del despliegue de un ambiente cloud
     ```bash
     utils/runlocal.sh undeploy "dev"
     ```
 
-    -- NOTA: Como en el caso anterior, esta ejecución permite la eliminación del despliegue del ambiente cloud mediante los
-    parámetros provistos. Los valores sportados son: "dev", "stg" y "prod"
+    > **NOTA:** Como en el caso anterior, esta ejecución permite la eliminación del despliegue del ambiente cloud mediante los
+    parámetros provistos. Los valores sportados son: "**dev**", "**stg**" y "**prod**"
 
   8) Destrucción del entorno de desarrollo local
     ```bash
@@ -106,8 +110,10 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
   Pueden presentarse errores al momento de la ejecución. Si se encontrara con un error similar a:
 
-  > Unable to find image '750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest' locally
-  > docker: Error response from daemon: Head https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env/manifests/latest: no basic auth credentials.
+  >>>
+  Unable to find image '750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest' locally
+  docker: Error response from daemon: Head https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env/manifests/latest: no basic auth credentials.
+  >>>
 
   Se debe a que no tiene las credenciales configuradas para poder descargar las imágenes del entorno local. Debería ejecutar lo
   siguiente para resolver el problema, y volver a intentar la ejecución:
@@ -116,20 +122,77 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   ```
 
 
-* Despliegue en un entorno Cloud
-  1) Configurar Cloud9:
-    - Para configurar Cloud9 se proporciona un template en CloudFormation que incluye todo lo necesario para desplegar
+## Despliegue en un entorno Cloud
+### Configurar Cloud9:
+    1) Para configurar Cloud9 se proporciona un template en CloudFormation que incluye todo lo necesario para desplegar
       el entorno. El archivo README.md proporciona las instrucciones necesarias para desplegar el entorno:
         URL: git@github.com:mvicha/cloud9-env.git
         BRANCH: dev
-  2) Configurar Jenkins:
+      ```bash
+      git clone git@github.com:mvicha/cloud9-env.git -b dev
+      cd cloud9-env
+      > Seguir las instrucciones de README.md
+      ```
+
+### Configurar Jenkins:
+  - El entorno de Jenkins ha sido creado por completo desde cero, ya que en algún momento la imágen de Jenkins dejó
+  de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser
+  modificadas en el archivo **variables.tf**. Se detallan a continuación:
+
+  <details>
+  <summary>create_repositories>
+  Esta variable acepta los valores "**true**" o "**false**", y lo que nos permite es indicarle a terraform si queremos
+  crear o no los repositorios en CodeCommit donde se guardará el código.
+
+  En el caso de disponer de un repositorio se puede setear en "**false**" y setear las variables "**todo_list_repo**" y
+  "**python_env_repo**"
+  </details>
+
+  <details>
+  <summary>python_env_repo</summary>
+  Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro del pipeline de
+  "**Python-Env**"
+  </details>
+
+  <details>
+  <summary>todo_list_repo</summary>
+  Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro de los pipelines
+  "**TODO-LIST...**"
+  </details>
+
+  <details>
+  <summary>jenkinsHome</summary>
+  No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio
+  HOME para la aplicación de Jenkins
+  </details>
+
+  <details>
+  <summary>jenkinsVolume</summary>
+  No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio
+  que se utilizará en el servidor como Volumen para compartir con el entorno Docker
+  </details>
+
+  <details>
+  <summary>jenkinsHttp / jenkinsHttps</summary>
+  No es necesario modificar estas variable. Se utilizan para definir los puertos HTTP y HTTPS que queremos utilizar para
+  conectarnos a Jenkins
+  </details>
+
+  <details>
+  <summary>jenkinsUser / jenkinsPassword</summary>
+  Requerido setear estas variables. Serán utilizadas para configurar el usuario / contraseña del usuario con permisos de
+  administrador de Jenkins
+  </details>
+
     - Con el entorno desplegado ejecutamos terraform para iniciar nuestro entorno de Jenkins. Este terraform ha sido
       ampliado para incluir la creación de unos ECRs (Elastic Container Registries), en el que se guardaran algunas
       imágenes de contenedores requeridas para que todo funcione.
         * ecr_python_env: Contiene un entorno de desarrollo para hacer el despliegue
       Los pasos a seguir son los siguientes:
         * Crear un bucket en s3 para guardar los estados de terraform:
+          ```bash
           aws s3api create-bucket --bucket <nombre-del-bucket> --region us-east-1
+          ```
         * Inicializar terraform:
           La versión de terraform que utilizamos en este caso es Terraform v0.14.3. Si ejecuta otra version puede
           que se requiera realizar cambios para que el entorno se despliegue de la manera apropiada.
@@ -170,7 +233,7 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
           El proceso en sí descarga un repositorio con los jobs y los parametriza, luego reinicia el servicio de Jenkins para que los
           Jobs queden configurados
 
-  3) Obtención de las credenciales de Jenkins:
+  3) Credenciales de Jenkins:
     Como la AMI de Jenkins que fue provista al principio dejó de funcionar/existir me vi en la necesidad de instalar una nueva. Esta nueva
     no tiene el usuario y password como la anterior. Para obtener el usuario y password hay que seguir los siguientes pasos:
 
