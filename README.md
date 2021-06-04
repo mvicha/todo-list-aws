@@ -23,7 +23,7 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
   <details>
   <summary>Ejecución de todos los trabajos a la vez.</summary>
-  Existe un Job que se llama <em>Todo-List-Full-Pipeline</em>, este se ejecuta paso a paso desde desarrollo hasta producción.
+  Existe un Job que se llama <b>Todo-List-Full-Pipeline</b>, este se ejecuta paso a paso desde desarrollo hasta producción.
   Cada ejecución exitosa del entorno anterior hará que los cambios del entorno sean incorporados en el siguiente nivel,
   y ejecutará el pipeline del nivel correspondiente, hasta llegar a producción
   </details>
