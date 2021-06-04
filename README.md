@@ -3,7 +3,7 @@
 Este Pipeline permite la ejecución de múltiples branches. Los requerimientos para que funciones son:
 
 - docker (utilizado para levantar entorno de desarrollo. Pipeline incluído en el repositorio:
-    ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/python-env
+    > ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/python-env
   )
 - usuario de codecommit con su clave ssh. Instrucciones de instalación en la guía de procedimientos
 
@@ -14,18 +14,18 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   - Entorno: Producción - Rama: master - Job: Todo-List-Production-Pipeline
 
 * El ciclo de vida sería de la siguiente forma:
-- Comenzamos trabajando en una rama descendiente de develop, por ejemplo feature-A.
-- Al terminar nuestro trabajo en feature-A haremos un pull request a develop
-- Al aprobarse develop ejecutaremos el pipeline del entorno de desarrollo (Todo-List-Develop-Pipeline)
-- Cuando estemos seguros que desarrollo está listo para promoverse haremos un pull request de develop a staging
-- Ejecutaremos el pipeline de staging (Todo-List-Staging-Pipeline)
-- Cuando estemos seguros que staging está listo para promoverse como estable haremos un pull request de staging a master
-- Ejecutaremos el pipeline de producción (Todo-List-Production-Pipeline)
+  - Comenzamos trabajando en una rama descendiente de develop, por ejemplo feature-A.
+  - Al terminar nuestro trabajo en feature-A haremos un pull request a develop
+  - Al aprobarse develop ejecutaremos el pipeline del entorno de desarrollo (Todo-List-Develop-Pipeline)
+  - Cuando estemos seguros que desarrollo está listo para promoverse haremos un pull request de develop a staging
+  - Ejecutaremos el pipeline de staging (Todo-List-Staging-Pipeline)
+  - Cuando estemos seguros que staging está listo para promoverse como estable haremos un pull request de staging a master
+  - Ejecutaremos el pipeline de producción (Todo-List-Production-Pipeline)
 
 * Ejecución de todos los trabajos a la vez.
-- Existe un Job que se llama Todo-List-Full-Pipeline, este se ejecuta paso a paso desde desarrollo hasta producción.
-  Cada ejecución exitosa del entorno anterior hará que los cambios del entorno sean incorporados en el siguiente nivel,
-  y ejecutará el pipeline del nivel correspondiente, hasta llegar a producción
+  - Existe un Job que se llama Todo-List-Full-Pipeline, este se ejecuta paso a paso desde desarrollo hasta producción.
+    Cada ejecución exitosa del entorno anterior hará que los cambios del entorno sean incorporados en el siguiente nivel,
+    y ejecutará el pipeline del nivel correspondiente, hasta llegar a producción
 
 * Guía de procedmientos:
   Lo primero que debemos tener en cuenta es que este trabajo práctico tiene ciertos requerimientos. Para facilitar la
@@ -50,52 +50,70 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
   Para llevar a cabo el despliegue procederemos de la siguiente manera:
   1) Creación del entorno local de desarrollo:
+    ```bash
     utils/runlocal.sh create
+    ```
 
   2) Ejecución de pruebas de código estático
+    ```bash
     utils/runlocal.sh run-static-tests
+    ```
 
   3) Inicialización de SAM API local (Esta ejecución a diferencia de las anteriores seguirá corriendo mientras no se cancele
     con CTRL+C.)
+    ```bash
     utils/runlocal.sh run-api
+    ```
 
   4) Ejecución de pruebas de integración (Esta ejecución deberá realizarse desde otra terminal sin cancelar la ejecución de
     SAM API local)
+    ```bash
     utils/runlocal.sh run-integration-tests local
+    ```
 
     -- NOTA: la ejecución de pruebas de integración permitiría testear entornos desplegados en la nube. Para ello en vez de
     incluir el parámetro "local", deberíamos incluir el parámetro del entorno que queremos verificar. Los valores soportados
     son: "local", "dev", "stg" y "prod"
 
   5) Creación del changeset
+    ```bash
     utis/runlocal.sh build "dev"
+    ```
 
     -- NOTA: Como en el caso anterior, esta ejecución permite la creación de nuestro build para los distintos ambientes mediante
     el paso del entorno. Los valores sportados son: "dev", "stg" y "prod"
 
   6) Despliegue del entorno
+    ```bash
     utils/runlocal.sh deploy "dev"
+    ```
 
     -- NOTA: Como en el caso anterior, esta ejecución permite el despliegue del entorno en el ambiente cloud mediante los
     parámetros provistos. Los valores sportados son: "dev", "stg" y "prod"
 
   7) Eliminación del despliegue de un ambiente cloud
+    ```bash
     utils/runlocal.sh undeploy "dev"
+    ```
 
     -- NOTA: Como en el caso anterior, esta ejecución permite la eliminación del despliegue del ambiente cloud mediante los
     parámetros provistos. Los valores sportados son: "dev", "stg" y "prod"
 
   8) Destrucción del entorno de desarrollo local
+    ```bash
     utils/runlocal.sh destroy
+    ```
 
   Pueden presentarse errores al momento de la ejecución. Si se encontrara con un error similar a:
 
-  - Unable to find image '750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest' locally
-  - docker: Error response from daemon: Head https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env/manifests/latest: no basic auth credentials.
+  > Unable to find image '750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest' locally
+  > docker: Error response from daemon: Head https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env/manifests/latest: no basic auth credentials.
 
   Se debe a que no tiene las credenciales configuradas para poder descargar las imágenes del entorno local. Debería ejecutar lo
   siguiente para resolver el problema, y volver a intentar la ejecución:
-  > aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env
+  ```bash
+  aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env
+  ```
 
 
 * Despliegue en un entorno Cloud
@@ -119,16 +137,22 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
           ecr_python_env_name, que debe contener el nombre del ECR que se creará para guardar la imágen de docker
 
           Si no se utilizara el default profile de AWS se debería exportar el valor a utilizar:
+          ```bash
             export AWS_PROFILE=unir
+          ```
 
           Toma nota de la  dirección IP en tu máquina local, la necesitarás para ejecutar terraform. para conseguirla
           puedes ejecutar:
+          ```bash
             export TF_VAR_myip=$(dig +short myip.opendns.com @resolver1.opendns.com)
+          ```
 
           Ahora con esos datos puedes ejecutar terraform. Esto creará el entorno de Jenkins
+          ```bash
             ./terraform init
             ./terraform plan -out=plan.out
             ./terraform apply plan.out
+          ```
 
         - Qué pasos realiza el proceso de Terraform:
            1) Creación de VPC
@@ -163,7 +187,8 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
         - Descripción: Llave que se utilizará para conectar a codecommit
         - Username: El ID que obtenemos en la salida de Terraform: codecommit_key_id
         - Private key (Enter directly): Pegar la clave de la salida de Terraform: key_pair_codecommit
-  5) Ejecución de Jobs:
+
+  4) Ejecución de Jobs:
     - El primer Job que debemos ejecutar es el de ENABLE-UNIR-CREDENTIALS. Este Job ha sido modificado para solicitar
       ECR_URL como parámetro. Esto es para iniciar sesión. Este parámetro lo obenemos de la ejecución de terraform anterior
       bajo el output ecr_python_env_url. En el caso de haber perdido el output se puede recuperar:
@@ -176,7 +201,9 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
     entrega un script (utils/fix.sh) que facilitará la tarea. Este script recibe como parámetros el path del directorio del alumno y la nueva
     url del repositorio
     A continuación un ejemplo:
-      $ utils/fix.sh todo-list-aws git@github.com:mvicha/todo-list-aws.git ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-aws-tf
+    ```bash
+      utils/fix.sh todo-list-aws git@github.com:mvicha/todo-list-aws.git ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-aws-tf
+    ```
 
 
 
