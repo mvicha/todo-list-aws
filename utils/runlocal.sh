@@ -2,6 +2,13 @@
 
 action=${1}
 
+if [[ -z "${AWS_PROFILE}" ]]; then
+  awsProfile=""
+else
+  awsProfile="-e AWS_PROFILE=${AWS_PROFILE}"
+fi
+
+
 function help {
     echo "Usage: ${0} <action>"
     echo -en "\nActions:"
@@ -25,6 +32,9 @@ function help {
     echo -en "\n\t3) Iniciar la API: ${0} run-api"
     echo -en "\n\t4) Ejecutar tests de integración: ${0} run-integration-tests <environmentType>"
     echo -en "\n\t5) Terminar la ejecución: ${0} destroy\n\n"
+
+    echo -en "NOTA: Si utilizas un AWS profile distinto a default exporta la variable de entorno\n"
+    echo -en "AWS_PROFILE con el nombre del profile: ej: export AWS_PROFILE=unir\n\n"
 }
 
 function cleanUp {
@@ -33,7 +43,7 @@ function cleanUp {
 
 function validateEnv {
     env=${1}
-    arrEnvironments=("local" "dev" "stg" "prod")
+    arrEnvironments=("dev" "stg" "prod")
     for environment in "${arrEnvironments[@]}"; do
         if [[ "${env}" == "${environment}" ]]; then
             return 0
@@ -94,9 +104,14 @@ case ${action} in
     run-integration-tests)
         if [[ -n "${2}" ]]; then
             environmentType=${2}
-            result="$(validateEnv ${environmentType})"
+            if [[ "${environment}" != "local" ]]; then
+              result="$(validateEnv ${environmentType})"
+            else
+              result=0
+            fi
+
             if [[ ${?} -eq 0 ]]; then
-                docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /opt/todo-list-aws/tests/run_integration.sh ${environmentType}
+                docker container exec -i ${awsProfile} -w /opt/todo-list-aws python-env-timeInSeconds /opt/todo-list-aws/tests/run_integration.sh ${environmentType}
             else
                 help
             fi
@@ -136,10 +151,10 @@ case ${action} in
                 echo "Deploy parameters:"
                 echo "Env: ${environmentType}"
                 echo "Bucket: ${s3bucket}"
-                docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${environmentType} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${environmentType}
+                docker container exec -i ${awsProfile} -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${environmentType} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${environmentType}
     
-                restApiId=$(docker container exec -i python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation describe-stacks --stack-name todo-list-aws-${environmentType} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text | tr -d '\n')
-                docker container exec -i python-env-timeInSeconds /home/builduser/.local/bin/aws apigateway update-stage \
+                restApiId=$(docker container exec -i ${awsProfile} python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation describe-stacks --stack-name todo-list-aws-${environmentType} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text | tr -d '\n')
+                docker container exec -i ${awsProfile} python-env-timeInSeconds /home/builduser/.local/bin/aws apigateway update-stage \
                     --rest-api-id ${restApiId} \
                     --stage-name Prod \
                     --patch-operations \
@@ -161,7 +176,9 @@ case ${action} in
                 echo "Undeploy parameters:"
                 echo "Env: ${environmentType}"
                 cleanUp
-                docker container exec -i -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation delete-stack --stack-name todo-list-aws-${environmentType}
+                docker container exec -i ${awsProfile} -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/aws cloudformation delete-stack --stack-name todo-list-aws-${environmentType}
+                echo "Deleting Table:"
+                docker container exec -i ${awsProfile} -w /opt/todo-list-aws python-env-timeInSeconds /home/builduser/.local/bin/aws dynamodb delete-table --table-name todoTable-${environmentType}
             else
                 help
             fi

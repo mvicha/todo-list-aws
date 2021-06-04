@@ -21,12 +21,12 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   - Cuando estemos seguros que staging está listo para promoverse como estable haremos un pull request de staging a master
   - Ejecutaremos el pipeline de producción (Todo-List-Production-Pipeline)
 
-  <details>
-  <summary>Ejecución de todos los trabajos a la vez.</summary>
+```
+####Ejecución de todos los trabajos a la vez.
   Existe un Job que se llama <b>Todo-List-Full-Pipeline</b>, este se ejecuta paso a paso desde desarrollo hasta producción.
   Cada ejecución exitosa del entorno anterior hará que los cambios del entorno sean incorporados en el siguiente nivel,
   y ejecutará el pipeline del nivel correspondiente, hasta llegar a producción
-  </details>
+```
 
 ## Guía de procedmientos:
   Lo primero que debemos tener en cuenta es que este trabajo práctico tiene ciertos requerimientos. Para facilitar la
@@ -136,50 +136,50 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser
   modificadas en el archivo **variables.tf**. Se detallan a continuación:
 
-  <details>
-  <summary>create_repositories>
+```
+create_repositories
   Esta variable acepta los valores "**true**" o "**false**", y lo que nos permite es indicarle a terraform si queremos
   crear o no los repositorios en CodeCommit donde se guardará el código.
 
   En el caso de disponer de un repositorio se puede setear en "**false**" y setear las variables "**todo_list_repo**" y
   "**python_env_repo**"
-  </details>
+```
 
-  <details>
-  <summary>python_env_repo</summary>
+```
+python_env_repo
   Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro del pipeline de
   "**Python-Env**"
-  </details>
+```
 
-  <details>
-  <summary>todo_list_repo</summary>
+```
+  todo_list_repo
   Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro de los pipelines
   "**TODO-LIST...**"
-  </details>
+```
 
-  <details>
-  <summary>jenkinsHome</summary>
+```
+  jenkinsHome
   No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio
   HOME para la aplicación de Jenkins
-  </details>
+```
 
-  <details>
-  <summary>jenkinsVolume</summary>
+```
+  jenkinsVolume
   No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio
   que se utilizará en el servidor como Volumen para compartir con el entorno Docker
-  </details>
+```
 
-  <details>
-  <summary>jenkinsHttp / jenkinsHttps</summary>
+```
+  jenkinsHttp / jenkinsHttps
   No es necesario modificar estas variable. Se utilizan para definir los puertos HTTP y HTTPS que queremos utilizar para
   conectarnos a Jenkins
-  </details>
+```
 
-  <details>
-  <summary>jenkinsUser / jenkinsPassword</summary>
+```
+  jenkinsUser / jenkinsPassword
   Requerido setear estas variables. Serán utilizadas para configurar el usuario / contraseña del usuario con permisos de
   administrador de Jenkins
-  </details>
+```
 
     - Con el entorno desplegado ejecutamos terraform para iniciar nuestro entorno de Jenkins. Este terraform ha sido
       ampliado para incluir la creación de unos ECRs (Elastic Container Registries), en el que se guardaran algunas
