@@ -123,34 +123,41 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   - El entorno de Jenkins ha sido creado por completo desde cero, ya que en algún momento la imágen de Jenkins dejó de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser modificadas en el archivo * *variables.tf**. Se detallan a continuación:
 
     * **create_repositories**
-
+      ```
       Esta variable acepta los valores "**true**" o "**false**", y lo que nos permite es indicarle a terraform si queremos crear o no los repositorios en CodeCommit donde se guardará el código.
 
       En el caso de disponer de un repositorio se puede setear en "**false**" y setear las variables "**todo_list_repo**" "**python_env_repo**"
+      ```
 
     * **python_env_repo**
-
+      ```
       Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro del pipeline de "**Python-Env**"
+      ```
 
     * **todo_list_repo**
-
+      ```
       Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro de los pipeline  "**TODO-LIST...**"
+      ```
 
     * **jenkinsHome**
-
+      ```
       No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio HOME para la aplicación de Jenkins
+      ```
 
     * **jenkinsVolume**
-
+      ```
       No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio que se utilizará en el servidor como Volumen para compartir con el entorno Docker
+      ```
 
     * **jenkinsHttp / jenkinsHttps**
-
+      ```
       No es necesario modificar estas variable. Se utilizan para definir los puertos HTTP y HTTPS que queremos utilizar para conectarnos a Jenkins
+      ```
 
     * **jenkinsUser / jenkinsPassword**
-
+      ```
       Requerido setear estas variables. Serán utilizadas para configurar el usuario / contraseña del usuario con permisos de administrador de Jenkins
+      ```
 
 
   - Con el entorno desplegado ejecutamos terraform para iniciar nuestro entorno de Jenkins. Este terraform ha sido ampliado para incluir la creación de unos ECRs (Elastic Container Registries), en el que se guardaran algunas imágenes de contenedores requeridas para que todo funcione.
@@ -208,21 +215,41 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
         - Username: El ID que obtenemos en la salida de Terraform: codecommit_key_id
         - Private key (Enter directly): Pegar la clave de la salida de Terraform: key_pair_codecommit
 
-  4) Ejecución de Jobs:
+  2) Ejecución de Jobs:
     - El primer Job que debemos ejecutar es el de ENABLE-UNIR-CREDENTIALS. Este Job ha sido modificado para solicitar ECR_URL como parámetro. Esto es para iniciar sesión. Este parámetro lo obenemos de la ejecución de terraform anterior bajo el output ecr_python_env_url. En el caso de haber perdido el output se puede recuperar:
   ```bash
         terraform output.
   ```
+
     - El siguiente Job que debemos ejecutar es el de Python-Env
     - Luego sólo nos queda ejecutar nuestro pipeline de desarrollo Todo-List-Dev-Pipeline o el que queramos ejecutar.
 
   **NOTA PARA IMPORTAR REPOSITORIOS:**
+
     Seguramente tengamos que imoprtar los repositorios de python-env y todo-list-aws en los reciéntemente creados por Teraform. Se entrega un script (utils/fix.sh) que facilitará la tarea. Este script recibe como parámetros el path del directorio del alumno y la nueva url del repositorio.
 
      A continuación un ejemplo:
     ```bash
       utils/fix.sh todo-list-aws git@github.com:mvicha/todo-list-aws.git ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-aws-tf
     ```
+
+## Terraform Output
+  A continuación se detallan los valores obtenidos con el comando terraform output
+
+  1. **codecommit_key_id** = ID de la clave SSH del usuario codecommit creado por terraform para utilizar los repositorios de CodeCommit
+  2. **ecr_python_env_url** = ARN del servicio DKR de AWS creado para guardar las imágenes de Docker para Python-Env
+  3. **jenkins_instance_id** = ID de la instancia Jenkins creada en AWS EC2
+  4. **jenkins_instance_security_group_id** = ID del grupo de seguridad creado en AWS EC2 para la instancia de Jenkins
+  5. **jenkins_public_ip** = Dirección IP pública de la instancia de Jenkins
+  6. **jenkins_url** = URL por medio de la cual se puede acceder a Jenkins
+  7. **key_pair_codecommit** = Clave SSH privada que se utilizará para acceder a los registros de CodeCommit. Esta clave debe ser ingresada en Jenkins para poder hacer uso de los repositorios privados de CodeCommit. (Copiar desde -----BEGIN RSA PRIVATE KEY----- hasta -----END RSA PRIVATE KEY----- inclusive)
+  8. **key_pair_jenkins** = Clave SSH privada para acceder a la intancia de Jenkins
+  9. **python_env_repo** = Repositorio donde se encuentra el código del entorno Ptyhon-Env
+  10. **s3_bucket_development** = Bucket creado para guardar los archivos de CloudFormation para development
+  11. **s3_bucket_production** = Bucket creado para guardar los archivos de CloudFormation para producción
+  12. **s3_bucket_staging** = Bucket creado para guardar los archivos de CloudFormation para staging
+  13. **ssh_connection** = Comando a ejecutar para conectar a la instancia de Jenkins via SSH
+  14. **todo_list_env_repo** = Repositorio dónde se encuentra el código del entorno Todo-List
 
 ## Estructura
 
