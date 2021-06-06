@@ -109,15 +109,15 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
 ## Despliegue en un entorno Cloud
 ### Configurar Cloud9:
-    - Para configurar Cloud9 se proporciona un template en CloudFormation que incluye todo lo necesario para desplegar el entorno. El archivo README.md proporciona las instrucciones necesarias para desplegar el entorno:
-        **URL:** git@github.com:mvicha/cloud9-env.git
-        **BRANCH:** dev
+  - Para configurar Cloud9 se proporciona un template en CloudFormation que incluye todo lo necesario para desplegar el entorno. El archivo README.md proporciona las instrucciones necesarias para desplegar el entorno:
+      **URL:** git@github.com:mvicha/cloud9-env.git
+      **BRANCH:** dev
 
-      ```bash
-      git clone git@github.com:mvicha/cloud9-env.git -b dev
-      cd cloud9-env
-      ```
-      > Seguir las instrucciones de README.md
+    ```bash
+    git clone git@github.com:mvicha/cloud9-env.git -b dev
+    cd cloud9-env
+    ```
+    > Seguir las instrucciones de README.md
 
 ### Configurar Jenkins:
   - El entorno de Jenkins ha sido creado por completo desde cero, ya que en algún momento la imágen de Jenkins dejó de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser modificadas en el archivo * *variables.tf**. Se detallan a continuación:
