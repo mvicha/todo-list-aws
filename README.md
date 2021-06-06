@@ -13,13 +13,13 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   - Entorno: Producción - Rama: master - Job: Todo-List-Production-Pipeline
 
 ### El ciclo de vida sería el siguiente:
-  - Comenzamos trabajando en una rama descendiente de develop, por ejemplo feature-A.
-  - Al terminar nuestro trabajo en feature-A haremos un pull request a develop
-  - Al aprobarse develop ejecutaremos el pipeline del entorno de desarrollo (Todo-List-Develop-Pipeline)
-  - Cuando estemos seguros que desarrollo está listo para promoverse haremos un pull request de develop a staging
-  - Ejecutaremos el pipeline de staging (Todo-List-Staging-Pipeline)
-  - Cuando estemos seguros que staging está listo para promoverse como estable haremos un pull request de staging a master
-  - Ejecutaremos el pipeline de producción (Todo-List-Production-Pipeline)
+  1. Comenzamos trabajando en una rama descendiente de develop, por ejemplo feature-A.
+  2. Al terminar nuestro trabajo en feature-A haremos un pull request a develop
+  3. Al aprobarse develop ejecutaremos el pipeline del entorno de desarrollo (Todo-List-Develop-Pipeline)
+  4. Cuando estemos seguros que desarrollo está listo para promoverse haremos un pull request de develop a staging
+  5. Ejecutaremos el pipeline de staging (Todo-List-Staging-Pipeline)
+  6. Cuando estemos seguros que staging está listo para promoverse como estable haremos un pull request de staging a master
+  7. Ejecutaremos el pipeline de producción (Todo-List-Production-Pipeline)
 
 #### Ejecución de todos los trabajos a la vez.
   Existe un Job que se llama <b>Todo-List-Full-Pipeline</b>, este se ejecuta paso a paso desde desarrollo hasta producción.
@@ -34,14 +34,14 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
 ### Despliegue en entorno local:
   Para desplegar en el entorno local utilizaremos el script ubicado en utils/runlocal.sh. Este script realiza las siguientes tareas:
-  - Crear el entorno local de desarrollo
-  - Ejecutar pruebas de código estático
-  - Inicializar SAM API
-  - Ejecutar pruebas de integración
-  - Construir el changeset de la aplicación y validarlo
-  - Desplegar el changeset a un entorno cloud desde el ambiente local
-  - Eliminar el despliegue de un entorno cloud
-  - Destruir el entorno de desarrollo local
+  1. Crear el entorno local de desarrollo
+  2. Ejecutar pruebas de código estático
+  3. Inicializar SAM API
+  4. Ejecutar pruebas de integración
+  5. Construir el changeset de la aplicación y validarlo
+  6. Desplegar el changeset a un entorno cloud desde el ambiente local
+  7. Eliminar el despliegue de un entorno cloud
+  8. Destruir el entorno de desarrollo local
 
   Para llevar a cabo el despliegue procederemos de la siguiente manera:
   1) Creación del entorno local de desarrollo:
@@ -66,28 +66,28 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   utils/runlocal.sh run-integration-tests local
   ```
 
-    > *NOTA:* la ejecución de pruebas de integración permitiría testear entornos desplegados en la nube. Para ello en vez de incluir el parámetro "local", deberíamos incluir el parámetro del entorno que queremos verificar. Los valores soportados son: "local", "dev", "stg" y "prod"
+    > **NOTA:** la ejecución de pruebas de integración permitiría testear entornos desplegados en la nube. Para ello en vez de incluir el parámetro "local", deberíamos incluir el parámetro del entorno que queremos verificar. Los valores soportados son: "local", "dev", "stg" y "prod"
 
   5) Creación del changeset
   ```bash
   utis/runlocal.sh build "dev"
   ```
 
-    > *NOTA:* Como en el caso anterior, esta ejecución permite la creación de nuestro build para los distintos ambientes mediante el paso del entorno. Los valores sportados son: "*dev*", "*stg*" y "*prod*"
+    > **NOTA:** Como en el caso anterior, esta ejecución permite la creación de nuestro build para los distintos ambientes mediante el paso del entorno. Los valores sportados son: "**dev**", "**stg**" y "**prod**"
 
   6) Despliegue del entorno
   ```bash
   utils/runlocal.sh deploy "dev"
   ```
 
-    > *NOTA:* Como en el caso anterior, esta ejecución permite el despliegue del entorno en el ambiente cloud mediante los parámetros provistos. Los valores sportados son: "*dev*", "*stg*" y "*prod*"
+    > **NOTA:** Como en el caso anterior, esta ejecución permite el despliegue del entorno en el ambiente cloud mediante los parámetros provistos. Los valores sportados son: "**dev**", "**stg**" y "**prod**"
 
   7) Eliminación del despliegue de un ambiente cloud
   ```bash
   utils/runlocal.sh undeploy "dev"
   ```
 
-    > *NOTA:* Como en el caso anterior, esta ejecución permite la eliminación del despliegue del ambiente cloud mediante los parámetros provistos. Los valores sportados son: "*dev*", "*stg*" y "*prod*"
+    > **NOTA:** Como en el caso anterior, esta ejecución permite la eliminación del despliegue del ambiente cloud mediante los parámetros provistos. Los valores sportados son: "**dev**", "**stg**" y "**prod**"
 
   8) Destrucción del entorno de desarrollo local
   ```bash
@@ -119,42 +119,30 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
       ```
 
 ### Configurar Jenkins:
-  - El entorno de Jenkins ha sido creado por completo desde cero, ya que en algún momento la imágen de Jenkins dejó de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser modificadas en el archivo *variables.tf*. Se detallan a continuación:
+  - El entorno de Jenkins ha sido creado por completo desde cero, ya que en algún momento la imágen de Jenkins dejó de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser modificadas en el archivo * *variables.tf**. Se detallan a continuación:
 
-    * *create_repositories*
-      Esta variable acepta los valores "*true*" o "*false*", y lo que nos permite es indicarle a terraform si queremos crear o no los repositorios en CodeCommit donde se guardará el código.
+    * **create_repositories**
+      Esta variable acepta los valores "**true**" o "**false**", y lo que nos permite es indicarle a terraform si queremos crear o no los repositorios en CodeCommit donde se guardará el código.
 
-      En el caso de disponer de un repositorio se puede setear en "*false*" y setear las variables "*todo_list_repo*" "*python_env_repo*"
+      En el caso de disponer de un repositorio se puede setear en "**false**" y setear las variables "**todo_list_repo**" "**python_env_repo**"
 
-```
-python_env_repo
-  Esta variable se utiliza en el caso de que "*create_repositories*" sea "*false*" como parámetro del pipeline de "*Python-Env*"
-```
+    * **python_env_repo**
+      Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro del pipeline de "**Python-Env**"
 
-```
-  todo_list_repo
-  Esta variable se utiliza en el caso de que "*create_repositories*" sea "*false*" como parámetro de los pipeline  "*TODO-LIST...*"
-```
+    * **todo_list_repo**
+      Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro de los pipeline  "**TODO-LIST...**"
 
-```
-  jenkinsHome
-  No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio HOME para la aplicación de Jenkins
-```
+    * **jenkinsHome**
+      No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio HOME para la aplicación de Jenkins
 
-```
-  jenkinsVolume
-  No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio que se utilizará en el servidor como Volumen para compartir con el entorno Docker
-```
+    * **jenkinsVolume**
+      No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio que se utilizará en el servidor como Volumen para compartir con el entorno Docker
 
-```
-  jenkinsHttp / jenkinsHttps
-  No es necesario modificar estas variable. Se utilizan para definir los puertos HTTP y HTTPS que queremos utilizar para conectarnos a Jenkins
-```
+    * **jenkinsHttp / jenkinsHttps**
+      No es necesario modificar estas variable. Se utilizan para definir los puertos HTTP y HTTPS que queremos utilizar para conectarnos a Jenkins
 
-```
-  jenkinsUser / jenkinsPassword
-  Requerido setear estas variables. Serán utilizadas para configurar el usuario / contraseña del usuario con permisos de administrador de Jenkins
-```
+    * **jenkinsUser / jenkinsPassword**
+      Requerido setear estas variables. Serán utilizadas para configurar el usuario / contraseña del usuario con permisos de administrador de Jenkins
 
     - Con el entorno desplegado ejecutamos terraform para iniciar nuestro entorno de Jenkins. Este terraform ha sido ampliado para incluir la creación de unos ECRs (Elastic Container Registries), en el que se guardaran algunas imágenes de contenedores requeridas para que todo funcione.
         * ecr_python_env: Contiene un entorno de desarrollo para hacer el despliegue
@@ -219,7 +207,7 @@ python_env_repo
     - El siguiente Job que debemos ejecutar es el de Python-Env
     - Luego sólo nos queda ejecutar nuestro pipeline de desarrollo Todo-List-Dev-Pipeline o el que queramos ejecutar.
 
-  * NOTA PARA IMPORTAR REPOSITORIOS:*
+  **NOTA PARA IMPORTAR REPOSITORIOS:**
     Seguramente tengamos que imoprtar los repositorios de python-env y todo-list-aws en los reciéntemente creados por Teraform. Se entrega un script (utils/fix.sh) que facilitará la tarea. Este script recibe como parámetros el path del directorio del alumno y la nueva url del repositorio.
 
      A continuación un ejemplo:
