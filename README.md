@@ -21,11 +21,9 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   - Cuando estemos seguros que staging está listo para promoverse como estable haremos un pull request de staging a master
   - Ejecutaremos el pipeline de producción (Todo-List-Production-Pipeline)
 
-```
-####Ejecución de todos los trabajos a la vez.
+#### Ejecución de todos los trabajos a la vez.
   Existe un Job que se llama <b>Todo-List-Full-Pipeline</b>, este se ejecuta paso a paso desde desarrollo hasta producción.
   Cada ejecución exitosa del entorno anterior hará que los cambios del entorno sean incorporados en el siguiente nivel, y ejecutará el pipeline del nivel correspondiente, hasta llegar a producción
-```
 
 ## Guía de procedmientos:
   Lo primero que debemos tener en cuenta es que este trabajo práctico tiene ciertos requerimientos. Para facilitar la instalación y despliegue de los mismos se han incluído algunas notas y se han mejorado algunos de los procesos que habían sido provistos para llevar a cabo dichos trabajos.
@@ -99,12 +97,14 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   Pueden presentarse errores al momento de la ejecución. Si se encontrara con un error similar a:
 
   > Unable to find image '750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest' locally
+
   > docker: Error response from daemon: Head https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env/manifests/latest: no basic auth credentials.
 
   Se debe a que no tiene las credenciales configuradas para poder descargar las imágenes del entorno local. Debería ejecutar lo siguiente para resolver el problema, y volver a intentar la ejecución:
   ```bash
   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin https://750489264097.dkr.ecr.us-east-1.amazonaws.com/v2/mvicha-ecr-python-env
   ```
+  Reemplaza la URL del endpoint dkr por la provista por terraform output (ver más adelante)
 
 
 ## Despliegue en un entorno Cloud
@@ -121,12 +121,10 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 ### Configurar Jenkins:
   - El entorno de Jenkins ha sido creado por completo desde cero, ya que en algún momento la imágen de Jenkins dejó de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser modificadas en el archivo *variables.tf*. Se detallan a continuación:
 
-```
-create_repositories
-  Esta variable acepta los valores "*true*" o "*false*", y lo que nos permite es indicarle a terraform si queremos crear o no los repositorios en CodeCommit donde se guardará el código.
+    * *create_repositories*
+      Esta variable acepta los valores "*true*" o "*false*", y lo que nos permite es indicarle a terraform si queremos crear o no los repositorios en CodeCommit donde se guardará el código.
 
-  En el caso de disponer de un repositorio se puede setear en "*false*" y setear las variables "*todo_list_repo*" "*python_env_repo*"
-```
+      En el caso de disponer de un repositorio se puede setear en "*false*" y setear las variables "*todo_list_repo*" "*python_env_repo*"
 
 ```
 python_env_repo
