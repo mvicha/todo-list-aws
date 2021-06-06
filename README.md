@@ -159,7 +159,7 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
     Requerido setear estas variables. Serán utilizadas para configurar el usuario / contraseña del usuario con permisos de administrador de Jenkins
 
 
-  Para desplegar Jenkins seguiremos los pasos detallados a continuación:
+#### Para desplegar Jenkins seguiremos los pasos detallados a continuación:
   1) Configurar estado remoto:
 
   Esta versión de terraform nos permite guardar el estado del despliegue de forma remota. Si trabaja en múltiples máquinas a la vez (Cloud9 y local por ejemplo) puede experimentar conflictos de estado al momento de despliegue. Para que esto no suceda los pasos que se deben cumplimentar son los siguientes:
