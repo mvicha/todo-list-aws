@@ -161,11 +161,11 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
   Para desplegar Jenkins seguiremos los pasos detallados a continuación:
   1) Configurar estado remoto:
-  Esta versión de terraform nos permite guardar el estado del despliegue de forma remota. Si trabaja en múltiples máquinas a la vez (Cloud9 y local por ejemplo) puede experimentar conflictos de estado al momento de despliegue. Para que esto no suceda los pasos que se deben cumplimentar son los siguientes:
-  - Crear un bucket donde guardaremos el estado remoto
-  ```bash
-  aws s3api create-bucket --bucket <nombre-del-bucket> --region us-east-1
-  ```
+    Esta versión de terraform nos permite guardar el estado del despliegue de forma remota. Si trabaja en múltiples máquinas a la vez (Cloud9 y local por ejemplo) puede experimentar conflictos de estado al momento de despliegue. Para que esto no suceda los pasos que se deben cumplimentar son los siguientes:
+    - Crear un bucket donde guardaremos el estado remoto
+    ```bash
+    aws s3api create-bucket --bucket <nombre-del-bucket> --region us-east-1
+    ```
 
   - Utilizar el nombre del bucket creado en el archivo state.tf
   ```
