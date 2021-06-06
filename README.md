@@ -172,6 +172,7 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
         key     = "newjenkins.state"
         ```
   2. Inicializar terraform:
+
     La versión de terraform que utilizamos en este caso es Terraform v0.14.3. Si ejecuta otra version puede que se requiera realizar cambios para que el entorno se despliegue de la manera apropiada.
 
     Edita el archivo de variables.tf dentro del directorio terraform. En el mismo encontrarás la variable ecr_python_env_name, que debe contener el nombre del ECR que se creará para guardar la imágen de docker
