@@ -160,8 +160,7 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 
 
 #### Para desplegar Jenkins seguiremos los pasos detallados a continuación:
-  1) Configurar estado remoto:
-
+1) Configurar estado remoto:
   Esta versión de terraform nos permite guardar el estado del despliegue de forma remota. Si trabaja en múltiples máquinas a la vez (Cloud9 y local por ejemplo) puede experimentar conflictos de estado al momento de despliegue. Para que esto no suceda los pasos que se deben cumplimentar son los siguientes:
 
   - Crear un bucket donde guardaremos el estado remoto
@@ -175,42 +174,42 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   key     = "newjenkins.state"
   ```
 
-  2) Inicializar terraform:
-    - La versión de terraform que utilizamos en este caso es Terraform v0.14.3. Si ejecuta otra version puede que se requiera realizar cambios para que el entorno se despliegue de la manera apropiada.
+2) Inicializar terraform:
+  - La versión de terraform que utilizamos en este caso es Terraform v0.14.3. Si ejecuta otra version puede que se requiera realizar cambios para que el entorno se despliegue de la manera apropiada.
 
-    - Edita el archivo de variables.tf dentro del directorio terraform. En el mismo encontrarás la variable ecr_python_env_name, que debe contener el nombre del ECR que se creará para guardar la imágen de docker
+  - Edita el archivo de variables.tf dentro del directorio terraform. En el mismo encontrarás la variable ecr_python_env_name, que debe contener el nombre del ECR que se creará para guardar la imágen de docker
 
-    - Si no se utilizara el default profile de AWS se debería exportar el valor a utilizar:
-    ```bash
-    export AWS_PROFILE=unir
-    ```
+  - Si no se utilizara el default profile de AWS se debería exportar el valor a utilizar:
+  ```bash
+  export AWS_PROFILE=unir
+  ```
 
-    - Toma nota de la  dirección IP en tu máquina local, la necesitarás para ejecutar terraform. para conseguirla puedes ejecutar:
-    ```bash
-    export TF_VAR_myip=$(dig +short myip.opendns.com @resolver1.opendns.com)
-    ```
+  - Toma nota de la  dirección IP en tu máquina local, la necesitarás para ejecutar terraform. para conseguirla puedes ejecutar:
+  ```bash
+  export TF_VAR_myip=$(dig +short myip.opendns.com @resolver1.opendns.com)
+  ```
 
-    _ Ahora con esos datos puedes ejecutar terraform. Esto creará el entorno de Jenkins
-    ```bash
-    ./terraform init
-    ./terraform plan -out=plan.out
-    ./terraform apply plan.out
-    ```
+  _ Ahora con esos datos puedes ejecutar terraform. Esto creará el entorno de Jenkins
+  ```bash
+  ./terraform init
+  ./terraform plan -out=plan.out
+  ./terraform apply plan.out
+  ```
 
-    Qué pasos realiza el proceso de Terraform:
-     1) Creación de VPC
-     2) Creación de Subnets
-     3) Creación de Security Groups
-     4) Creación de codecommit user
-     5) Asignación de privilegios CodeCommit Full al usuario codecommit recientemente creado
-     6) Creación de DKR para guardar la imágen de python-env
-     7) (opcional) Creación del repositorio python-env
-     8) (opcional) Creación del repositorio todo-list-aws
-     9) Despliegue de la instancia de Jenkins
-    10) Configuración de Jobs de Jenkins
+  Qué pasos realiza el proceso de Terraform:
+   1) Creación de VPC
+   2) Creación de Subnets
+   3) Creación de Security Groups
+   4) Creación de codecommit user
+   5) Asignación de privilegios CodeCommit Full al usuario codecommit recientemente creado
+   6) Creación de DKR para guardar la imágen de python-env
+   7) (opcional) Creación del repositorio python-env
+   8) (opcional) Creación del repositorio todo-list-aws
+   9) Despliegue de la instancia de Jenkins
+  10) Configuración de Jobs de Jenkins
 
-    EL PROCESO DE TERRAFORM AUTOMÁTICAMENTE CONFIGURA LOS JOBS CON LOS PARÁMETROS REQUERIDOS GRACIAS A LA EJECUCIÓN DE **user-data**.
-    El proceso en sí descarga un repositorio con los jobs y los parametriza, luego reinicia el servicio de Jenkins para que los Jobs queden configurados
+  EL PROCESO DE TERRAFORM AUTOMÁTICAMENTE CONFIGURA LOS JOBS CON LOS PARÁMETROS REQUERIDOS GRACIAS A LA EJECUCIÓN DE **user-data**.
+  El proceso en sí descarga un repositorio con los jobs y los parametriza, luego reinicia el servicio de Jenkins para que los Jobs queden configurados
 
 ### Configuración de Jenkins
   1) Configuración del usuario de CodeCommit:
