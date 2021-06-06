@@ -123,41 +123,41 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   El entorno de Jenkins ha sido creado por completo desde cero, ya que en algún momento la imágen de Jenkins dejó de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser modificadas en el archivo * *variables.tf**. Se detallan a continuación:
 
   * **create_repositories**
-    ```
+
     Esta variable acepta los valores "**true**" o "**false**", y lo que nos permite es indicarle a terraform si queremos crear o no los repositorios en CodeCommit donde se guardará el código.
 
     En el caso de disponer de un repositorio se puede setear en "**false**" y setear las variables "**todo_list_repo**" "**python_env_repo**"
-    ```
+
 
   * **python_env_repo**
-    ```
+
     Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro del pipeline de "**Python-Env**"
-    ```
+
 
   * **todo_list_repo**
-    ```
+
     Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro de los pipeline  "**TODO-LIST...**"
-    ```
+
 
   * **jenkinsHome**
-    ```
+
     No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio HOME para la aplicación de Jenkins
-    ```
+
 
   * **jenkinsVolume**
-    ```
+
     No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable se utiliza para definir el directorio que se utilizará en el servidor como Volumen para compartir con el entorno Docker
-    ```
+
 
   * **jenkinsHttp / jenkinsHttps**
-    ```
+
     No es necesario modificar estas variable. Se utilizan para definir los puertos HTTP y HTTPS que queremos utilizar para conectarnos a Jenkins
-    ```
+
 
   * **jenkinsUser / jenkinsPassword**
-    ```
+
     Requerido setear estas variables. Serán utilizadas para configurar el usuario / contraseña del usuario con permisos de administrador de Jenkins
-    ```
+
 
   Para desplegar Jenkins seguiremos los pasos detallados a continuación:
   1. Configurar estado remoto:
@@ -172,41 +172,41 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
         key     = "newjenkins.state"
         ```
   2. Inicializar terraform:
-    La versión de terraform que utilizamos en este caso es Terraform v0.14.3. Si ejecuta otra version puede que se requiera realizar cambios para que el entorno se despliegue de la manera apropiada.
+  La versión de terraform que utilizamos en este caso es Terraform v0.14.3. Si ejecuta otra version puede que se requiera realizar cambios para que el entorno se despliegue de la manera apropiada.
 
-    Edita el archivo de variables.tf dentro del directorio terraform. En el mismo encontrarás la variable ecr_python_env_name, que debe contener el nombre del ECR que se creará para guardar la imágen de docker
+  Edita el archivo de variables.tf dentro del directorio terraform. En el mismo encontrarás la variable ecr_python_env_name, que debe contener el nombre del ECR que se creará para guardar la imágen de docker
 
-    Si no se utilizara el default profile de AWS se debería exportar el valor a utilizar:
-    ```bash
-      export AWS_PROFILE=unir
-    ```
+  Si no se utilizara el default profile de AWS se debería exportar el valor a utilizar:
+  ```bash
+  export AWS_PROFILE=unir
+  ```
 
-    Toma nota de la  dirección IP en tu máquina local, la necesitarás para ejecutar terraform. para conseguirla puedes ejecutar:
-    ```bash
-      export TF_VAR_myip=$(dig +short myip.opendns.com @resolver1.opendns.com)
-    ```
+  Toma nota de la  dirección IP en tu máquina local, la necesitarás para ejecutar terraform. para conseguirla puedes ejecutar:
+  ```bash
+  export TF_VAR_myip=$(dig +short myip.opendns.com @resolver1.opendns.com)
+  ```
 
-    Ahora con esos datos puedes ejecutar terraform. Esto creará el entorno de Jenkins
-    ```bash
-      ./terraform init
-      ./terraform plan -out=plan.out
-      ./terraform apply plan.out
-    ```
+  Ahora con esos datos puedes ejecutar terraform. Esto creará el entorno de Jenkins
+  ```bash
+  ./terraform init
+  ./terraform plan -out=plan.out
+  ./terraform apply plan.out
+  ```
 
-    Qué pasos realiza el proceso de Terraform:
-     1) Creación de VPC
-     2) Creación de Subnets
-     3) Creación de Security Groups
-     4) Creación de codecommit user
-     5) Asignación de privilegios CodeCommit Full al usuario codecommit recientemente creado
-     6) Creación de DKR para guardar la imágen de python-env
-     7) (opcional) Creación del repositorio python-env
-     8) (opcional) Creación del repositorio todo-list-aws
-     9) Despliegue de la instancia de Jenkins
-    10) Configuración de Jobs de Jenkins
+  Qué pasos realiza el proceso de Terraform:
+   1) Creación de VPC
+   2) Creación de Subnets
+   3) Creación de Security Groups
+   4) Creación de codecommit user
+   5) Asignación de privilegios CodeCommit Full al usuario codecommit recientemente creado
+   6) Creación de DKR para guardar la imágen de python-env
+   7) (opcional) Creación del repositorio python-env
+   8) (opcional) Creación del repositorio todo-list-aws
+   9) Despliegue de la instancia de Jenkins
+  10) Configuración de Jobs de Jenkins
 
-    EL PROCESO DE TERRAFORM AUTOMÁTICAMENTE CONFIGURA LOS JOBS CON LOS PARÁMETROS REQUERIDOS GRACIAS A LA EJECUCIÓN DE **user-data**.
-    El proceso en sí descarga un repositorio con los jobs y los parametriza, luego reinicia el servicio de Jenkins para que los Jobs queden configurados
+  EL PROCESO DE TERRAFORM AUTOMÁTICAMENTE CONFIGURA LOS JOBS CON LOS PARÁMETROS REQUERIDOS GRACIAS A LA EJECUCIÓN DE **user-data**.
+  El proceso en sí descarga un repositorio con los jobs y los parametriza, luego reinicia el servicio de Jenkins para que los Jobs queden configurados
 
 ### Configuración de Jenkins
   1) Configuración del usuario de CodeCommit:
