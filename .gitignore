@@ -149,3 +149,6 @@ node_modules
 
 # sam deployment files
 .aws-sam/
+
+# MAC Files
+.DS_Store
