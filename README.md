@@ -259,6 +259,13 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
         - Username: El ID que obtenemos en la salida de Terraform: codecommit_key_id
         - Private key (Enter directly): Pegar la clave de la salida de Terraform: key_pair_codecommit
 
+  ```
+  En caso de que no se utilizara el servicio de CodeCommit donde alojar el repositorio deberá utilizar la clave SSH asociada a GitHub y el usuario será git:
+    ID: codecommit
+    Username: git
+    Private key (Enter directly): Github id_rsa key pair
+  ```
+
   2) Ejecución de Jobs:
     - El primer Job que debemos ejecutar es el de ENABLE-UNIR-CREDENTIALS. Este Job ha sido modificado para solicitar ECR_URL como parámetro. Esto es para iniciar sesión. Este parámetro lo obenemos de la ejecución de terraform anterior bajo el output ecr_python_env_url. En el caso de haber perdido el output se puede recuperar:
   ```bash

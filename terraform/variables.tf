@@ -54,7 +54,7 @@ variable "python_env_image" {
 
 variable "todo_list_repo" {
   description = "Repositorio existente de todo-list-aws"
-  default     = "https://github.com/mvicha/todo-list-aws.git"
+  default     = "ssh://git@github.com/mvicha/todo-list-aws.git"
 }
 
 variable "jenkinsHome" {
