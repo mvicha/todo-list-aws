@@ -16,6 +16,7 @@ Globals:
 Parameters:
   EnvironmentType:
     Type: String
+    Default: local
     AllowedValues:
       - 'local'
       - 'dev'
