@@ -6,21 +6,24 @@ data "template_file" "setup" {
   template = file("${path.module}/templates/setup.tpl")
 
   vars = {
-    jenkinsHome     = var.jenkinsHome
-    jenkinsVolume   = var.jenkinsVolume
-    jenkinsHttp     = var.jenkinsHttp
-    jenkinsHttps    = var.jenkinsHttps
-    jenkinsImage    = var.jenkinsImage
-    jenkinsUser     = var.jenkinsUser
-    jenkinsPassword = var.jenkinsPassword
-    ssh_user        = var.ssh_user
-    accountId       = data.aws_caller_identity.current.account_id
-    pythonEcr       = aws_ecr_repository.ecr_python_env.repository_url
-    pythonRepo      = local.aws_python_env_repo
-    todoRepo        = local.aws_todo_list_repo
-    devBucket       = aws_s3_bucket.s3_bucket_development.id
-    stgBucket       = aws_s3_bucket.s3_bucket_staging.id
-    prodBucket      = aws_s3_bucket.s3_bucket_production.id
+    jenkinsHome           = var.jenkinsHome
+    jenkinsVolume         = var.jenkinsVolume
+    jenkinsHttp           = var.jenkinsHttp
+    jenkinsHttps          = var.jenkinsHttps
+    jenkinsImage          = var.jenkinsImage
+    jenkinsUser           = var.jenkinsUser
+    jenkinsPassword       = var.jenkinsPassword
+    ssh_user              = var.ssh_user
+    accountId             = data.aws_caller_identity.current.account_id
+    repoUnirCredentials   = var.repo_unir_credentials
+    repoTodoListPipelines = var.repo_todo_list_pipelines
+    pythonEcr             = local.python_ecr
+    pythonImage           = local.python_env_image
+    pythonRepo            = local.aws_python_env_repo
+    todoRepo              = local.aws_todo_list_repo
+    devBucket             = aws_s3_bucket.s3_bucket_development.id
+    stgBucket             = aws_s3_bucket.s3_bucket_staging.id
+    prodBucket            = aws_s3_bucket.s3_bucket_production.id
   }
 }
 

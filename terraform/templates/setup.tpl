@@ -41,31 +41,31 @@ runcmd:
   - update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 
   # Unir Credentials
-  - git clone https://github.com/mvicha/ENABLE_UNIR_CREDENTIALS.git ${jenkinsVolume}/jobs/ENABLE-UNIR-CREDENTIALS
+  - git clone ${repoUnirCredentials} ${jenkinsVolume}/jobs/ENABLE-UNIR-CREDENTIALS
   - sed -i "s/AWSAccountId/${accountId}/g" ${jenkinsVolume}/jobs/ENABLE-UNIR-CREDENTIALS/config.xml
 
   # Python-Env
-  - git clone https://github.com/mvicha/TODO-LIST.git -b feature-gitplugin /tmp/TODO-LIST
+  - git clone ${repoTodoListPipelines} -b feature-gitplugin /tmp/TODO-LIST
   - sed -i 's@dkr_python_env_url@${pythonEcr}@g' /tmp/TODO-LIST/Python-Env/config.xml
   - sed -i 's@codecommit_python_env_url@${pythonRepo}@g' /tmp/TODO-LIST/Python-Env/config.xml
   - mv /tmp/TODO-LIST/Python-Env ${jenkinsVolume}/jobs/Python-Env
 
   # Pipeline-Staging
-  - sed -i 's@dkr_python_env_url@${pythonEcr}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
+  - sed -i 's@dkr_python_env_url@${pythonImage}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
   - sed -i 's@codecommit_todo_list_repo@${todoRepo}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
   - sed -i 's@staging_bucket_name@${stgBucket}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
   - sed -i 's@production_bucket_name@${prodBucket}@g' /tmp/TODO-LIST/PIPELINE-FULL-STAGING/config.xml
   - mv /tmp/TODO-LIST/PIPELINE-FULL-STAGING ${jenkinsVolume}/jobs/PIPELINE-FULL-STAGING
 
   # Pipleine-Prod
-  - sed -i 's@dkr_python_env_url@${pythonEcr}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
+  - sed -i 's@dkr_python_env_url@${pythonImage}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
   - sed -i 's@codecommit_todo_list_repo@${todoRepo}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
   - sed -i 's@staging_bucket_name@${stgBucket}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
   - sed -i 's@production_bucket_name@${prodBucket}@g' /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION/config.xml
   - mv /tmp/TODO-LIST/PIPELINE-FULL-PRODUCTION ${jenkinsVolume}/jobs/PIPELINE-FULL-PRODUCTION
 
   # Pipeline-CD
-  - sed -i 's@dkr_python_env_url@${pythonEcr}@g' /tmp/TODO-LIST/PIPELINE-FULL-CD/config.xml
+  - sed -i 's@dkr_python_env_url@${pythonImage}@g' /tmp/TODO-LIST/PIPELINE-FULL-CD/config.xml
   - sed -i 's@codecommit_todo_list_repo@${todoRepo}@g' /tmp/TODO-LIST/PIPELINE-FULL-CD/config.xml
   - mv /tmp/TODO-LIST/PIPELINE-FULL-CD ${jenkinsVolume}/jobs/PIPELINE-FULL-CD
 

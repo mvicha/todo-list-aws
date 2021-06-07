@@ -122,6 +122,32 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
 ### Despliegue de la instancia de Jenkins:
   El entorno de Jenkins ha sido creado por completo desde cero, ya que en algún momento la imágen de Jenkins dejó de existir y para seguir trabajando tuve que crear una propia. Se disponen de varias variables que deben ser modificadas en el archivo * *variables.tf**. Se detallan a continuación:
 
+
+  * **ecr_python_env_name**
+
+    Esta variable guarda el nombre del ECR que crearemos para guardar las imágenes Docker de un entorno de Python y AWS para Jenkins
+
+
+  * **codecommit_python_env**
+
+    Esta variable guarda el nombre del repositorio para guardar el entorno de desarrollo
+
+
+  * **codecommit_todo_list**
+
+    Esta variable guarda el nombre del repositorio para guardar los sources de la app
+
+
+  * **repo_unir_credentials**
+
+    No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable define el repositorio que contiene el job de unir.
+
+
+  * **repo_todo_list_pipelines**
+
+    No es necesario modificar esta variable, y se recomienda no hacerlo. Esta variable define el repositorio que contiene los pipelines de Jenkins
+
+
   * **create_repositories**
 
     Esta variable acepta los valores "**true**" o "**false**", y lo que nos permite es indicarle a terraform si queremos crear o no los repositorios en CodeCommit donde se guardará el código.
@@ -132,6 +158,11 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   * **python_env_repo**
 
     Esta variable se utiliza en el caso de que "**create_repositories**" sea "**false**" como parámetro del pipeline de "**Python-Env**"
+
+
+  * **python_env_image**
+
+    Esta variable define una imagen preexistente de python-env. En caso de que el largo de que el valor contenga al menos un caracter se utilizará como imagen preexistente de Python-Env
 
 
   * **todo_list_repo**
@@ -157,6 +188,11 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   * **jenkinsUser / jenkinsPassword**
 
     Requerido setear estas variables. Serán utilizadas para configurar el usuario / contraseña del usuario con permisos de administrador de Jenkins
+
+
+  * **jenkinsImage**
+
+    Esta variable define la imagen de Jenkins que se utilizará para iniciar el contenedor con el servicio de Jenkins
 
 
 #### Para desplegar Jenkins seguiremos los pasos detallados a continuación:
@@ -258,6 +294,84 @@ Este Pipeline permite la ejecución de múltiples branches. Los requerimientos p
   12. **s3_bucket_staging** = Bucket creado para guardar los archivos de CloudFormation para staging
   13. **ssh_connection** = Comando a ejecutar para conectar a la instancia de Jenkins via SSH
   14. **todo_list_env_repo** = Repositorio dónde se encuentra el código del entorno Todo-List
+
+  ```
+  Outputs:
+
+  codecommit_key_id = "APKA25PFFL7QYIPFKQNI"
+  ecr_python_env_url = ""
+  jenkins_instance_id = "i-08213acc678e8faf9"
+  jenkins_instance_security_group_id = "sg-03e5f65f77bc8368a"
+  jenkins_public_ip = "54.90.163.247"
+  jenkins_url = "http://54.90.163.247:80"
+  key_pair_codecommit = <<EOT
+  -----BEGIN RSA PRIVATE KEY-----
+  MIIEowIBAAKCAQEAzv4cpAVrIYc10vEG3bGOseUdtIuHDbkUT+59zQ4/7vOhRFQ/
+  36qgoHN4aI/Ldp6QIZt5riGCGLRIJ0iDtvcjWvy0W27Yb4N+nyN9B48CxIi7zd+4
+  CAgD9dXyzBLWVxlnDcySbTcBBHMsfeidCQQbTUe6TBJoJLGBvdiqgCsDqAiB/wLF
+  19c3JBWCjRsv7TKcDrNxJV212b80LX7SemNkR5OadxyW1lPlfLevNSwX6rmVU1g+
+  TYQbrlbzsyL5sTF1rE18vCXVQTpAYwrKP2To/fEwFsBKaUqQ/NtGAzox1iFZsJh8
+  3hZIDEp41MHGfzoX2OeiJkIcWfi2WDc7HdlhRwIDAQABAoIBAQC4MFyyA3RSEGvv
+  ubRfX5lXaUZmmuXhazjM666b4js32Sk+kS2JTN7ECBw0BwiJFA2zKhM7xOtsKjgu
+  ZJN4IzAdzdJ7rgYALOVmnICsUjCnS/i5+IJc+yzy+5+iwnxiYuNV3xzI/HH2ULpd
+  i7j5BeN5gAMhoBt101Jc6cjGZgBJ6zZ13zLoVY7Ez4N/edXabsZMV3vH6gGvBXJb
+  QcvPH5ujCTeamG3EwVqjxFf6S0b85tIFGWqUUtUjM73edEvjp40iXdsMZBcMff3V
+  HyJdHCsZYdDJLpCPa1jJSRNmoQEvaH7IUOXtqKuZenwp7J8ieZaB/gVUl/wP44jH
+  AFF0im7ZAoGBAOjJM4BBIBs3oLPy1CUFCe1JaI1Tce0c4kc5+LHWQAMj5TVsxOv7
+  Jk/jXXhvb5AUETEPd4FZZNu6OREF+3kG5j23W5nUOUFpMSeonu0C4xJAsl113iEJ
+  UDbwKlT8n/bAR+9RkdyVgbsw19cCiY2ac321ONpVfJzlQRWMlqlDP6FTAoGBAOOi
+  brA7cePnXyRbgZwhCyh39ngY0TblMQcy/bJUiT7uZOJ5ssjvLE4h7q2Z/JA7JCLX
+  BIeQ5KlZIGemv7VpzAQpc4mLzJZMs/13kJiOjfrnhiFEcQUg3t3Go6wqDp5Pgr4R
+  Zea5ZUDdXsG09mj7xnGzz4yJjwod+yLMCPmJh729An94B0aG2w2y+vvhzVOVwwNb
+  Vn6SYHRdzobeMwYIrHBVLi0BXxQqmVUn3BRWBR+BKteydEcqau2WXm8OWAdSYDxX
+  ljOlHchn8dVmnYtUqihrQPC3QA9I+YRiz3MEXz4b/QkaXPTYyD4cRxMDyksiuIDU
+  UJz/9xRJ0eu9MMB+hi5JAoGBAJ7YJi1MDfle5wFT6WmtlT+0FoVPrA6GeGPxrR7X
+  5r3HVRbEnYGhhGUxQIBbx+ZNnrXBHSQMc8PIsdgif/xzyy3MTxdYOndXJvJkkL4k
+  G+dN0Ec+ny9Y9KwFhQkKgBDwoudG9Li//mv5DbpWMOypZJzLQLVs+CezLB/oCQs4
+  cURxAoGBALD8LpTMuvM+JbHmx/rDQtrWwhVEUNZl06WcvFswygJzzqeiwpb2fy1A
+  ioVj4VF6wn2IC2icuhS1rX42Kvs7zD+AepvH/4xBly7a52AMMltcBkzjpYOFIlOX
+  94eIEeZXrMll8YiP357UKFQraA2xt220MO/C41LCfGS68rFg/+lr
+  -----END RSA PRIVATE KEY-----
+
+  EOT
+  key_pair_jenkins = <<EOT
+  -----BEGIN RSA PRIVATE KEY-----
+  MIIEpQIBAAKCAQEArZ29MNuKByjKgZlE5fRlwEf0ZHvW7ocarSV7CNFYVSd4a4e1
+  iCmkk6AgPootJDkQZAltHV3Qi3KZMcLfhy7vpUoZ0AlAyzIB+PZUfeAtfo7MJx6A
+  tgkNDYCznxz6qY9ghEh6iOtMQ0+hVrSQjl/VXapGR0hRYEpzuFqiJMd3L4EXPZJw
+  2lnsqXI0o3yKP3f+xr/Ey310S8TmYK4Dc18j7re2CBnvXzBSjWyRXBATcqQaoy1w
+  9VTvwWaCLEx2eQLNBPz30P0/ZvPqoKsX5RshxQIURp/yH4Ek8gwQ1MOG2jhcF8j/
+  QqIAfXl8lcLDn/7o8StrUGd4iju2aPAMmLlsFwIDAQABAoIBAQCOzSy9EAaDBwEy
+  AfBSuGgs9MJHGDlcLpI5kpeVVCO0vudkgtZErgPpTQ7YgezJW4pozfwK6IxM9rCc
+  5m3XEjsZGE8M919tAq/uqCYs9wRUkX3IO2Wg1OcAkTitCjf+2aiIhdkL34X143yQ
+  BarVAGxOQ2zU2t3cNsDiBOJTICGfVtGpacMDLuJ9LJlLHK11TaM0xDq5/hqc+h/N
+  M80Ptb9Oh78paD6jz+T/+bqv4/ZVgW177NatA6Vxuheh2IeRJuXr9Wzr9tTxt016
+  wi/mQXuvx6HHJJkV9Ev1a7WzVoxfYKxCO9H+rRdE73lDQLDOzL7k/cEAbP+iF+pQ
+  UM0EeaJBAoGBAOZoK2m5xsTvdbrIh7RXanZ8WepL/B8PUexP8f85QqsEJ3sakVbJ
+  KlGG/0LTvOLE+hkLqIw+Z1Az2UVFTyVOlPCvtKs9PwrLqo1AbbOQ5KHbjL/qLjHh
+  u6gnpQIxXitIJ/t5Uxo7aCHxkTw4QRMy2Mk4879jvrB9NCb1Yl5RHpJ3AoGBAMDm
+  rENMba+2OrJJEa3KetNd/ZWznPNovFZPbKTEiyPy6Xx0hRrwXiJE9uAbvRH2uHZn
+  WPYgHUmp7M1f9SzWL/5tdVq30+n+5c77x25Ffl401GdeOTUGEA7kpcwCGyA+xiyt
+  ttjQ4bnzKc1gb+ABVkpqS8UQuBx62Yoo6Bes0bthAoGBAMCw08XK2YIv5Zy9Qki/
+  ZskKvEPnIkZzkIb6YR+aqrfNdJtOn8gd2udt6CLiY7CfHa4+gsovEkYP5qA5E7TW
+  oFceCxG+2e9UXyFchaJMBfmbXH3QAqwy5bb+2NAZq3C1GsMEN0zT7AWfOmBLh5jf
+  yE+Y8rjYWUzOmQQP6iGI4/GHAoGALeJw1W1HpgU9vwzcdK92OfLgkAxyZ//g1NL9
+  r8/EnR955I2+36KPca1f3/0ZIz3BsQByS9FlxhDycAPESQ8FyYp14MdbVAy601pW
+  nOdQ4M3GPHRQPUmc5j4DJhzWIPxtnVEQ7k/5cYbiyaSH2AvZX8gbD9wjPzsFpfSH
+  CKKmHOECgYEA3/9SbC+7Lc3xUIeeD0w+li4E6gqFlbSPTtkKTwGWpllkx8tvmQsV
+  u3ZjLxvPRINr+NCrZG5p9y7i4Srze/MyFP5pQxcfsH+LNdEm9VSBHi/id0Tg8zMQ
+  xUWhAuYS65ejJcR6JET9V4Z3YYFs5qlGRuOBgYXdGRRTmeq7/tAq+r4=
+  -----END RSA PRIVATE KEY-----
+
+  EOT
+  python_env_image = "mvilla/python-env:latest"
+  python_env_repo = "ssh://git@gitlab.mvilla.org:8022/unir/python-env.git"
+  s3_bucket_development = "es-unir-development-s3-42310-artifacts"
+  s3_bucket_production = "es-unir-production-s3-42310-artifacts"
+  s3_bucket_staging = "es-unir-staging-s3-42310-artifacts"
+  ssh_connection = "ssh -i resources/jenkins/key.pem ec2-user@54.90.163.247"
+  todo_list_env_repo = "git@github.com:mvicha/todo-list-aws.git
+  ```
 
 ## Estructura
 

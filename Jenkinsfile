@@ -105,7 +105,7 @@ def pythonBuildEnv(action, timeInSeconds, doTests) {
       break;
     case 'remove':
       stage('Remove Build Environment') {
-        sh "docker container rm -e DOCKER_HOST=172.17.0.1:2375 -f python-env-${timeInSeconds}"
+        sh "docker container rm -f python-env-${timeInSeconds}"
       }
       break;
   }
@@ -131,7 +131,7 @@ def localDynamo(action, timeInSeconds, doTests) {
     case 'remove':
       stage('Remove local dynamodb') {
         if (doTests) {
-          sh "docker container rm -e DOCKER_HOST=172.17.0.1:2375 -f dynamodb-${timeInSeconds}"
+          sh "docker container rm -f dynamodb-${timeInSeconds}"
         } else {
           echo "Este entorno no ejecutó tests, por lo que no es necesario detener DynamoDB-Local (No iniciado)"
         }
@@ -215,6 +215,8 @@ def startLocalApi(timeInSeconds, doTests) {
 def buildApp(timeInSeconds, doLocal, stackName) {
   stage('Build application') {
     if (!doLocal) {
+      sh "mkdir .aws-sam"
+      sh "chmod 777 .aws-sam"
       sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam build --region us-east-1 --debug --docker-network aws-${timeInSeconds} --parameter-overrides EnvironmentType=${stackName}"
     } else {
       echo "No construiremos la app en un entorno local"

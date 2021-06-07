@@ -43,7 +43,7 @@ output "jenkins_public_ip" {
 }
 
 output "ecr_python_env_url" {
-  value = aws_ecr_repository.ecr_python_env.repository_url
+  value = local.python_ecr
 }
 
 output "python_env_repo" {
@@ -54,3 +54,6 @@ output "todo_list_env_repo" {
   value = local.aws_todo_list_repo
 }
 
+output "python_env_image" {
+  value = local.python_env_image
+}

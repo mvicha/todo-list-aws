@@ -14,7 +14,7 @@ variable "instance_type" {
 
 variable "ecr_python_env_name" {
   description = "Nombre del ECR que crearemos para guardar las imágenes Docker de un entorno de Python y AWS para Jenkins"
-  default     = "mvicha-ecr-python-env-tf"
+  default     = "ecr-python-env-tf"
 }
 
 variable "codecommit_python_env" {
@@ -29,22 +29,32 @@ variable "codecommit_todo_list" {
 
 variable "repo_unir_credentials" {
   description = "Repositorio que contiene el job de unir"
-  default     = "git@github.com:mvicha/ENABLE_UNIR_CREDENTIALS.git"
+  default     = "https://github.com/mvicha/ENABLE_UNIR_CREDENTIALS.git"
+}
+
+variable "repo_todo_list_pipelines" {
+  description = "Repositorio que contiene los pipelines de Jenkins"
+  default     = "https://github.com/mvicha/TODO-LIST.git"
 }
 
 variable "create_repositories" {
   description = "Crear repositorios python-env y todo-list-aws o utilizar repositorios existentes"
-  default     = true
+  default     = false
 }
 
 variable "python_env_repo" {
   description = "Repositorio existente de python-env"
-  default     = "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/python-env"
+  default     = "https://github.com/mvicha/python-env.git"
+}
+
+variable "python_env_image" {
+  description = "Imagen preexistente de Python-Env"
+  default     = "mvilla/python-env:latest"
 }
 
 variable "todo_list_repo" {
   description = "Repositorio existente de todo-list-aws"
-  default     = "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-aws"
+  default     = "https://github.com/mvicha/todo-list-aws.git"
 }
 
 variable "jenkinsHome" {
