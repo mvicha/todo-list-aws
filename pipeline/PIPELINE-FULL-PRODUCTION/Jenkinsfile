@@ -11,6 +11,18 @@ if (timeInSeconds < 0) {
   println("Fixed Time is now: " + timeInSeconds.toString())
 }
 
+Boolean removeNetwork = true
+Boolean removeEnv = true
+Boolean removeDynamo = true
+String buildError = ""
+
+/*
+  Seteamos la variable GIT_BRANCH en caso de que no exista
+*/
+if (!env.GIT_BRANCH) {
+    echo "NULL VALUE FOR GIT_BRANCH"
+    GIT_BRANCH = scm.branches[0].name
+}
 
 
 /*
@@ -20,24 +32,25 @@ if (timeInSeconds < 0) {
     - doTests: Utilizado para validar realización de pruebas
     - stackName: Utilizado para darle un nombre al stack de CloudFormation
 */
-if ("${ENVIRONMENT}" == "develop") {
-  s3bucket = "${S3BUCKET_NAME}"
+if (GIT_BRANCH == "origin/develop") {
+  s3bucket = "${env.DEVELOP_S3BUCKET_NAME}"
   doLocal = false
   doTests = true
   stackName = "dev"
-} else if ("${ENVIRONMENT}" == "staging") {
-  s3bucket = "${S3BUCKET_NAME}"
+} else if (GIT_BRANCH == "origin/staging") {
+  s3bucket = "${env.STAGING_S3BUCKET_NAME}"
   doLocal = false
   doTests = true
   stackName = "stg"
-} else if ("${ENVIRONMENT}" == "master") {
-  s3bucket = "${S3BUCKET_NAME}"
+} else if (GIT_BRANCH == "origin/master") {
+  s3bucket = "${env.PRODUCTION_S3BUCKET_NAME}"
   doLocal = false
   doTests = false
   stackName = "prod"
 } else {
   doLocal = true
   doTests = true
+  s3bucket = null
   stackName = "local"
 }
 
@@ -86,9 +99,9 @@ def pythonBuildEnv(action, timeInSeconds, doTests) {
     case 'create':
       stage('Create Build Environment') {
         if (doTests) {
-          sh "docker container run --name python-env-${timeInSeconds} --link dynamodb-${timeInSeconds}:dynamodb --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} ${ECR_PYTHON}"
+          sh "docker container run -e DOCKER_HOST=172.17.0.1:2375 --name python-env-${timeInSeconds} --link dynamodb-${timeInSeconds}:dynamodb --network aws-${timeInSeconds} -di -v /var/lib/jenkins/.aws:/var/lib/jenkins/.aws -v \${PWD}:\${PWD} ${env.ECR_PYTHON}"
         } else {
-          sh "docker container run --name python-env-${timeInSeconds} --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v \${HOME}/.aws:/home/builduser/.aws -v \${PWD}:\${PWD} ${ECR_PYTHON}"
+          sh "docker container run -e DOCKER_HOST=172.17.0.1:2375 --name python-env-${timeInSeconds} --network aws-${timeInSeconds} -di -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/jenkins/.aws:/var/lib/jenkins/.aws -v \${PWD}:\${PWD} ${env.ECR_PYTHON}"
         }
       }
       break;
@@ -111,7 +124,7 @@ def localDynamo(action, timeInSeconds, doTests) {
     case 'create':
       stage('Create local dynamodb') {
         if (doTests) {
-          sh "docker container run -d --network aws-${timeInSeconds} --name dynamodb-${timeInSeconds} --rm amazon/dynamodb-local"
+          sh "docker container run -e DOCKER_HOST=172.17.0.1:2375 -d --network aws-${timeInSeconds} --name dynamodb-${timeInSeconds} --rm amazon/dynamodb-local"
         } else {
           echo "Este entorno no ejecutará tests, por lo que no es necesario iniciar DynamoDB-Local"
         }
@@ -141,7 +154,7 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
     case 'static':
       stage('Run tests 1/2 - Static tests') {
         if (doTests) {
-          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_tests.sh"
+          sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_tests.sh"
         } else {
           echo "Este entorno no ejecutará tests"
         }
@@ -150,7 +163,7 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
     case 'unittest':
       stage('Run tests 2/2 - unittest') {
         if (doTests) {
-          sh "docker container exec -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_unittest.sh"
+          sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_unittest.sh"
         } else {
           echo "Este entorno no ejecutará tests"
         }
@@ -159,9 +172,9 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
     case 'integration':
       stage('Run integration tests') {
         if (doLocal) {
-          sh "docker container exec -w \${PWD} -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
+          sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -w \${PWD} -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
         } else {
-          sh "docker container exec -w \${PWD} -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
+          sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -w \${PWD} -i python-env-${timeInSeconds} /opt/todo-list-aws/tests/run_integration.sh ${stackName}"
         }
       }
   }
@@ -174,7 +187,7 @@ def testApp(timeInSeconds, doLocal, doTests, testCase) {
     - destination: Directorio de destino (/opt/todo-list-aws)
 */
 def linkDirectory(timeInSeconds, source, destination) {
-  sh "docker container exec -u root python-env-${timeInSeconds} ln -sf ${source} ${destination}"
+  sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -u root python-env-${timeInSeconds} ln -sf ${source} ${destination}"
 }
 
 /*
@@ -185,8 +198,8 @@ def linkDirectory(timeInSeconds, source, destination) {
 def startLocalApi(timeInSeconds, doTests) {
   stage("Start sam local-api") {
     if (doTests) {
-      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} sed -i 's/timeInSeconds/${timeInSeconds}/g' todos/todoTableClass.py"
-      sh "docker container exec -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
+      sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -d -w \${PWD} python-env-${timeInSeconds} sed -i 's/timeInSeconds/${timeInSeconds}/g' todos/todoTableClass.py"
+      sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -d -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam local start-api --region us-east-1 --host 0.0.0.0 --port 8080 --debug --docker-network aws-${timeInSeconds} --docker-volume-basedir \${PWD}"
       // Wait 10 seconds for api to start
       sleep 10
     } else {
@@ -204,7 +217,9 @@ def startLocalApi(timeInSeconds, doTests) {
 def buildApp(timeInSeconds, doLocal, stackName) {
   stage('Build application') {
     if (!doLocal) {
-      sh "docker container exec -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam build --region us-east-1 --debug --docker-network aws-${timeInSeconds} --parameter-overrides EnvironmentType=${stackName}"
+      sh "mkdir .aws-sam"
+      sh "chmod 777 .aws-sam"
+      sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam build --region us-east-1 --debug --docker-network aws-${timeInSeconds} --parameter-overrides EnvironmentType=${stackName}"
     } else {
       echo "No construiremos la app en un entorno local"
     }
@@ -219,7 +234,7 @@ def buildApp(timeInSeconds, doLocal, stackName) {
 def validateApp(timeInSeconds, doLocal) {
   stage('Validate cloudformation template') {
     if (!doLocal) {
-      sh "docker container exec -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/aws cloudformation validate-template --template-body file://.aws-sam/build/template.yaml"
+      sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/aws cloudformation validate-template --region us-east-1 --template-body file://.aws-sam/build/template.yaml"
     } else {
       echo "No hemos construido una app para validar en un entorno local"
     }
@@ -232,12 +247,31 @@ def validateApp(timeInSeconds, doLocal) {
     - doLocal: para saber si estamo trabajando en un entorno local
     - stackName: para trabajar sobre un stack de CloudFormation
 */
-def deployApp(timeInSeconds, doLocal, stackName) {
+def deployApp(timeInSeconds, doLocal, stackName, s3bucket) {
   stage('Deploy application') {
     if (!doLocal) {
-      sh "docker container exec -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${stackName} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${stackName}"
+      sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -i -w \${PWD} python-env-${timeInSeconds} /home/builduser/.local/bin/sam deploy --region us-east-1 --debug --force-upload --stack-name todo-list-aws-${stackName} --debug --s3-bucket ${s3bucket} --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvironmentType=${stackName}"
     } else {
-      echo "No hemos construído ni validado la app en un entorno local para desplegar"
+      echo "No hemos construido ni validado la app en un entorno local para desplegar"
+    }
+  }
+}
+
+/*
+  Habilitar logs de Api Gw
+*/
+def enableApiLogs(timeInSeconds, doLocal, stackName) {
+  stage('Enable API GW logs') {
+    if (!doLocal) {
+      String restApiId = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-${stackName} --query 'Stacks[0].Outputs[?OutputKey==`todoListResourceApiId`].OutputValue' --output text | tr -d '\n'", returnStdout: true)
+
+      sh "docker container exec -e DOCKER_HOST=172.17.0.1:2375 -i python-env-${timeInSeconds} /home/builduser/.local/bin/aws apigateway update-stage \
+        --rest-api-id ${restApiId} \
+        --stage-name Prod \
+        --patch-operations \
+          op=replace,path=/*/*/logging/dataTrace,value=true \
+          op=replace,path=/*/*/logging/loglevel,value=Info \
+          op=replace,path=/*/*/metrics/enabled,value=true"
     }
   }
 }
@@ -261,86 +295,152 @@ node {
   // Obtenemos la última versión del código desde Git
   stage('Checkout') {
     echo 'Checkout SCM'
-    git branch: "${ENVIRONMENT}",
-          credentialsId: "${CODECOMMIT_ID}",
-          url: "${GIT_REPO}"
+    //checkout scm
+    git branch: GIT_BRANCH,
+        credentialsId: 'codecommit',
+        url: 'ssh://git@github.com/mvicha/todo-list-aws.git'
   }
 
   // Descargamos las imágenes de docker que vamos a utilizar
   stage('Pull docker images') {
-    sh "docker image pull ${ECR_PYTHON}"
+    sh "docker image pull ${env.ECR_PYTHON}"
     sh "docker image pull amazon/dynamodb-local"
   }
 
   try {
-    // Creamos la red de docker
-    dockerNetwork('create', timeInSeconds)
     try {
-      // Iniciamos dynamodb-local
-      localDynamo('create', timeInSeconds, doTests)
+      // Creamos la red de docker
+      dockerNetwork('create', timeInSeconds)
 
       try {
-        // Iniciamos nuestro entorno de build
-        pythonBuildEnv('create', timeInSeconds, doTests)
+        // Iniciamos dynamodb-local
+        localDynamo('create', timeInSeconds, doTests)
 
         try {
-          // Creamos symlink del directorio
-          linkDirectory(timeInSeconds, WORKSPACE, "/opt/todo-list-aws")
-
-          // Testeamos el código y realizmos unittests
-          testApp(timeInSeconds, doLocal, doTests, 'static')
-          testApp(timeInSeconds, doLocal, doTests, 'unittest')
-
-          // Iniciamos local-api
-          startLocalApi(timeInSeconds, doTests)
+          // Iniciamos nuestro entorno de build
+          pythonBuildEnv('create', timeInSeconds, doTests)
 
           try {
-            // Construimos, validamos y desplegamos la app
-            buildApp(timeInSeconds, doLocal, stackName)
-            validateApp(timeInSeconds, doLocal)
-            deployApp(timeInSeconds, doLocal, stackName)
-          } catch(da) {
-            // Fallo al construir o desplegar la app
-            printFailure(da)
-            currentBuild.result = "FAILURE"
+            // Creamos symlink del directorio
+            linkDirectory(timeInSeconds, WORKSPACE, "/opt/todo-list-aws")
+
+            try {
+              // Testeamos el código y realizmos unittests
+              testApp(timeInSeconds, doLocal, doTests, 'static')
+              testApp(timeInSeconds, doLocal, doTests, 'unittest')
+
+              try {
+                // Iniciamos local-api
+                startLocalApi(timeInSeconds, doTests)
+
+                try {
+                  // Construimos, validamos y desplegamos la app
+                  buildApp(timeInSeconds, doLocal, stackName)
+
+                  try {
+                    validateApp(timeInSeconds, doLocal)
+
+                    try {
+                      deployApp(timeInSeconds, doLocal, stackName, s3bucket)
+
+                      try {
+                        enableApiLogs(timeInSeconds, doLocal, stackName)
+
+                        try {
+                          // Realizamos integration test
+                          testApp(timeInSeconds, doLocal, doTests, 'integration')
+                        } catch(ti) {
+                          // Si Algo falló mostramos un error
+                          printFailure(ti)
+
+                          buildError = 'Integration Test'
+                          currentBuild.result = 'FAILURE'
+                        }
+                      } catch(ea) {
+                        // Fallo al construir o desplegar la app
+                        printFailure(ea)
+
+                        buildError = 'Enable API Logging'
+                        currentBuild.result = 'FAILURE'
+                      }
+                    } catch(da) {
+                      printFailure(da)
+
+                      buildError = 'App Deployment'
+                      currentBuild.result = 'FAILURE'
+                    }
+                  } catch(va) {
+                    printFailure(va)
+
+                    buildError = 'App Validation'
+                    currentBuild.result = 'FAILURE'
+                  }
+                } catch(ba) {
+                  printFailure(ba)
+
+                  buildError = 'App Building'
+                  currentBuild.result = 'FAILURE'
+                }
+              } catch(e) {
+                printFailure(e)
+
+                buildError = 'Local API Create'
+                currentBuild.result = 'FAILURE'
+              }
+            } catch (ts) {
+              printFailure(ts)
+
+              buildError = "Test static"
+              currentBuild.result = 'FAILURE'
+            }
+          } catch(ld) {
+            printFailure(ld)
+
+            buildError = 'Link Directory'
+            currentBuild.result = 'FAILURE'
           }
+        } catch(be) {
+          print(be)
+          removeEnv = false
 
-          // Realizamos integration test
-          testApp(timeInSeconds, doLocal, doTests, 'integration')
-        } catch(r) {
-          // Si Algo falló mostramos un error
-          printFailure(r)
-          currentBuild.result = "FAILURE"
-        } finally {
-          // Siempre eliminamos el entorno de build
-          pythonBuildEnv('remove', timeInSeconds, doLocal)
+          buildError = 'Python-Env Create'
+          currentBuild.result = 'FAILURE'
         }
+      } catch(ldc) {
+        printFailure(ldc)
+        removeEnv = false
+        removeDynamo = false
 
-      } catch(ld) {
-        // Si no pudimos iniciar el entorno de build mostramos error
-        printFailure(ld)
-        currentBuild.result = "FAILURE"
-      } finally {
-        // Siempre eliminamos dynamodb-local
-        localDynamo('remove', timeInSeconds, doTests)
+        buildError = 'DynamoDB Create'
+        currentBuild.result = 'FAILURE'
       }
+    } catch(dn) {
+      printFailure(dn)
+      removeNetwork = false
+      removeEnv = false
+      removeDynamo = false
 
-    } catch(be) {
-      // Si no pudimos iniciar dynamodb-local mostramos error
-      printFailure(be)
-      currentBuild.result = "FAILURE"
-    } finally {
+      buildError = 'Docker Network Create'
+      currentBuild.result = 'FAILURE'
+    }
+
+  } finally {
+    if (removeEnv) {
+      // Siempre eliminamos el entorno de build
+      pythonBuildEnv('remove', timeInSeconds, doLocal)
+    }
+
+    if (removeDynamo) {
+      // Siempre eliminamos dynamodb-local
+      localDynamo('remove', timeInSeconds, doTests)
+    }
+
+    if (removeNetwork) {
       // Siempre eliminamos la red de docker
       dockerNetwork('remove', timeInSeconds)
     }
 
-  } catch(dn) {
-    // Si no pudimos iniciar la red de docker mostramos un error
-    printFailure(dn)
-    currentBuild.result = "FAILURE"
+    // Limpiamos el entorno
+    cleanUp(false)
   }
-
-  // Limpiamos el entorno
-  cleanUp(false)
 }
-
