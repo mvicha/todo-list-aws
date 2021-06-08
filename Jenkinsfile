@@ -14,6 +14,7 @@ if (timeInSeconds < 0) {
 Boolean removeNetwork = true
 Boolean removeEnv = true
 Boolean removeDynamo = true
+String buildError = ""
 
 /*
   Seteamos la variable GIT_BRANCH en caso de que no exista
@@ -49,6 +50,7 @@ if (GIT_BRANCH == "origin/develop") {
 } else {
   doLocal = true
   doTests = true
+  s3bucket = null
   stackName = "local"
 }
 
@@ -303,100 +305,139 @@ node {
   }
 
   try {
-    // Creamos la red de docker
-    dockerNetwork('create', timeInSeconds)
-  } catch(e) {
-    printFailure(e)
-    removeNetwork = false
-    removeEnv = false
-    removeDynamo = false
-  }
-  
-  try {
-      // Iniciamos dynamodb-local
-    localDynamo('create', timeInSeconds, doTests)
-  } catch(e) {
-    printFailure(e)
-    removeEnv = false
-    removeDynamo = false
-  }
+    try {
+      // Creamos la red de docker
+      dockerNetwork('create', timeInSeconds)
 
-  try {
-    // Iniciamos nuestro entorno de build
-    pythonBuildEnv('create', timeInSeconds, doTests)
-  } catch(e) {
-    print(Failure)
-    removeEnv = false
+      try {
+        // Iniciamos dynamodb-local
+        localDynamo('create', timeInSeconds, doTests)
+
+        try {
+          // Iniciamos nuestro entorno de build
+          pythonBuildEnv('create', timeInSeconds, doTests)
+
+          try {
+            // Creamos symlink del directorio
+            linkDirectory(timeInSeconds, WORKSPACE, "/opt/todo-list-aws")
+
+            try {
+              // Testeamos el código y realizmos unittests
+              testApp(timeInSeconds, doLocal, doTests, 'static')
+              testApp(timeInSeconds, doLocal, doTests, 'unittest')
+
+              try {
+                // Iniciamos local-api
+                startLocalApi(timeInSeconds, doTests)
+
+                try {
+                  // Construimos, validamos y desplegamos la app
+                  buildApp(timeInSeconds, doLocal, stackName)
+
+                  try {
+                    validateApp(timeInSeconds, doLocal)
+
+                    try {
+                      deployApp(timeInSeconds, doLocal, stackName, s3bucket)
+
+                      try {
+                        enableApiLogs(timeInSeconds, doLocal, stackName)
+
+                        try {
+                          // Realizamos integration test
+                          testApp(timeInSeconds, doLocal, doTests, 'integration')
+                        } catch(ti) {
+                          // Si Algo falló mostramos un error
+                          printFailure(ti)
+
+                          buildError = 'Integration Test'
+                          currentBuild.result = 'FAILURE'
+                        }
+                      } catch(ea) {
+                        // Fallo al construir o desplegar la app
+                        printFailure(ea)
+
+                        buildError = 'Enable API Logging'
+                        currentBuild.result = 'FAILURE'
+                      }
+                    } catch(da) {
+                      printFailure(da)
+
+                      buildError = 'App Deployment'
+                      currentBuild.result = 'FAILURE'
+                    }
+                  } catch(va) {
+                    printFailure(va)
+
+                    buildError = 'App Validation'
+                    currentBuild.result = 'FAILURE'
+                  }
+                } catch(ba) {
+                  printFailure(ba)
+
+                  buildError = 'App Building'
+                  currentBuild.result = 'FAILURE'
+                }
+              } catch(e) {
+                printFailure(e)
+
+                buildError = 'Local API Create'
+                currentBuild.result = 'FAILURE'
+              }
+            } catch (ts) {
+              printFailure(ts)
+
+              buildError = "Test static"
+              currentBuild.result = 'FAILURE'
+            }
+          } catch(ld) {
+            printFailure(ld)
+
+            buildError = 'Link Directory'
+            currentBuild.result = 'FAILURE'
+          }
+        } catch(be) {
+          print(be)
+          removeEnv = false
+
+          buildError = 'Python-Env Create'
+          currentBuild.result = 'FAILURE'
+        }
+      } catch(ldc) {
+        printFailure(ldc)
+        removeEnv = false
+        removeDynamo = false
+
+        buildError = 'DynamoDB Create'
+        currentBuild.result = 'FAILURE'
+      }
+    } catch(dn) {
+      printFailure(dn)
+      removeNetwork = false
+      removeEnv = false
+      removeDynamo = false
+
+      buildError = 'Docker Network Create'
+      currentBuild.result = 'FAILURE'
+    }
+
+  } finally {
+    if (removeEnv) {
+      // Siempre eliminamos el entorno de build
+      pythonBuildEnv('remove', timeInSeconds, doLocal)
+    }
+
+    if (removeDynamo) {
+      // Siempre eliminamos dynamodb-local
+      localDynamo('remove', timeInSeconds, doTests)
+    }
+
+    if (removeNetwork) {
+      // Siempre eliminamos la red de docker
+      dockerNetwork('remove', timeInSeconds)
+    }
+
+    // Limpiamos el entorno
+    cleanUp(false)
   }
-
-  try {
-    // Creamos symlink del directorio
-    linkDirectory(timeInSeconds, WORKSPACE, "/opt/todo-list-aws")
-
-    // Testeamos el código y realizmos unittests
-    testApp(timeInSeconds, doLocal, doTests, 'static')
-    testApp(timeInSeconds, doLocal, doTests, 'unittest')
-  } catch(e) {
-    printFailure(e)
-  }
-
-  try {
-    // Iniciamos local-api
-    startLocalApi(timeInSeconds, doTests)
-  } catch(e) {
-    printFailure(e)
-  }
-
-  try {
-    // Construimos, validamos y desplegamos la app
-    buildApp(timeInSeconds, doLocal, stackName)
-  } catch(e) {
-    printFailure(e)
-  }
-
-  try {
-    validateApp(timeInSeconds, doLocal)
-  } catch(e) {
-    printFailure(e)
-  }
-
-  try {
-    deployApp(timeInSeconds, doLocal, stackName, s3bucket)
-  } catch(e) {
-      printFailure(e)
-  }
-
-  try {
-    enableApiLogs(timeInSeconds, doLocal, stackName)
-  } catch(e) {
-    // Fallo al construir o desplegar la app
-    printFailure(e)
-  }
-
-  try {
-    // Realizamos integration test
-    testApp(timeInSeconds, doLocal, doTests, 'integration')
-  } catch(e) {
-    // Si Algo falló mostramos un error
-    printFailure(r)
-  }
-
-  if (removeEnv) {
-    // Siempre eliminamos el entorno de build
-    pythonBuildEnv('remove', timeInSeconds, doLocal)
-  }
-
-  if (removeDynamo) {
-    // Siempre eliminamos dynamodb-local
-    localDynamo('remove', timeInSeconds, doTests)
-  }
-
-  if (removeNetwork) {
-    // Siempre eliminamos la red de docker
-    dockerNetwork('remove', timeInSeconds)
-  }
-
-  // Limpiamos el entorno
-  cleanUp(false)
 }
-
