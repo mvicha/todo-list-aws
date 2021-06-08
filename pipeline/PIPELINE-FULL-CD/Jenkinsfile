@@ -1,10 +1,10 @@
-def cloneGit(gitRepo, branchName) {
+def cloneGit(branchName) {
   stage("Clone ${branchName} Repo") {
     // Limpiamos el entorno antes de comenzar
     deleteDir()
     git branch: branchName,
-      credentialsId: ${env.CODECOMMIT_ID},
-      url: gitRepo
+      credentialsId: "${env.CODECOMMIT_ID}",
+      url: "${env.GIT_REPO}"
   }
 }
 
@@ -32,7 +32,7 @@ def mergeGit(origin, dest) {
 }
 def pushGit(origin) {
   stage("Push ${origin} merged changes") {
-    withCredentials([sshUserPrivateKey(credentialsId: 'codecommit', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USERNAME')]) {
+    withCredentials([sshUserPrivateKey(credentialsId: "${env.CODECOMMIT_ID}", keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USERNAME')]) {
       withEnv(["GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -o User=${SSH_USERNAME} -i ${SSH_KEY}"]) {
         sh "git push origin ${origin}"
       }
@@ -41,16 +41,11 @@ def pushGit(origin) {
 }
 
 node {
-  /*
-    Definimos la URL del repositorio de codecommit que luego utilizaremos
-  */
-  String gitRepo = "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/todo-list-aws"
-
   try {
     /*
       Clonamos dev para configurar
     */
-    cloneGit(gitRepo, 'staging')
+    cloneGit('staging')
 
     /*
       Configuramos git para que utilice un nombre de usuario y un email
@@ -66,7 +61,7 @@ node {
         Habiendo finalizado Staging correctamente clonamos, mergeamos y pusheamos a producción
     */
     // Clonamos
-    cloneGit(gitRepo, 'master')
+    cloneGit('master')
     // Mergeamos
     mergeGit('staging', 'master')
     // Pusheamos

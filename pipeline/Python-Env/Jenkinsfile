@@ -1,7 +1,7 @@
-String gitRepo = "ssh://git-codecommit.us-east-1.amazonaws.com/v1/repos/python-env"
-String branchName = "master"
-String ecrDest = "750489264097.dkr.ecr.us-east-1.amazonaws.com/mvicha-ecr-python-env:latest"
-String credentialsId = "codecommit"
+String gitRepo = "${env.GIT_REPO}"
+String branchName = "${env.GIT_BRANCH}"
+String ecrDest = "${env.ECR_DEST}"
+String credentialsId = "${env.CODECOMMIT_ID}"
 
 
 pipeline {
@@ -33,4 +33,3 @@ pipeline {
     }
   }
 }
-
